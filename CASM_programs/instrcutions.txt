@@ -1,7 +1,7 @@
 Toutes les instructions du CASM (C++ asembly) et comment les utiliser.
 CASM version 2 beta.
 Tous droits réservés au dévelopeur du projet.
-Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli.
+Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli par une variable ou une constante.
 
 =====SECTIONS=====
 
@@ -90,3 +90,4 @@ endfunc       =>fin de la fonction
 Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur en 2 parties:
 -la partie principale qui est un compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire
 -la partie secondaire qui est un interpréteur codé en c++ (g++) et qui interprète le fichier binaire
+
