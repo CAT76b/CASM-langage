@@ -1,2 +1,4 @@
 # CASM-langage
-a custom programmation langage inspired by assembly
+A custom programmation langage inspired by assembly
+
+All instructions are in the file
