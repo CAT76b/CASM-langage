@@ -87,7 +87,7 @@ endfunc       =>fin de la fonction
 
 ====================
 
-Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur en 2 parties:
--la partie principale qui est un compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire
--la partie secondaire qui est un interpréteur codé en c++ (g++) et qui interprète le fichier binaire
-
+Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur, une VM (Virtual Machine ou interpreteur) et un dump:
+-le compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire (little-endian)
+-la VM ou interpréteur codé en c++ (g++) et qui interprète le fichier binaire
+-le dump qui affiche dans la console le contenu brut du script compilé en binaire et en hexadécimal
