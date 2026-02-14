@@ -29,7 +29,7 @@ egal:
     prt i_a
     prt " et "
     prt i_b
-    prt " sont_egaux\n"
+    prt " sont egaux\n"
     jmp lancement
 
 ;si le premier nombre est plus grand
@@ -63,3 +63,4 @@ lancement:
     jmp lancement
 
 ext ;securite
+
