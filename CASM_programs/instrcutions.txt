@@ -1,0 +1,92 @@
+Toutes les instructions du CASM (C++ asembly) et comment les utiliser.
+CASM version 2 beta.
+Tous droits réservés au dévelopeur du projet.
+Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli.
+
+=====SECTIONS=====
+
+section.data =>section dans laquelle on déclare toutes les variables
+
+section.code =>section dans laquelle on met le script
+
+=====VARIABLES=====
+
+crt i_xxx, xxx =>crée une variable et lui donne une valeur (mettre i_ (int), f_ (float) ou s_ (string) au début
+				 du nom de la variable pour la typer)
+
+set xxx, xxx =>change la valeur d'une variable (variable soulignée avec ~~)
+    ~~~
+
+=====ORDRES===========
+
+prt |-> xxx   =>affiche le contenu de la variable
+	|-> "xxx" =>affiche le texte brut
+
+lct xxx =>lit une entrée et la met dans la variable indiquée
+
+xxx xxx =>appelle une fonction de header ("nom de la fonction" "variable à observer")
+
+header xxx =>appelle un header
+
+ext  	=>arrete le programme
+
+ret  	=>retour à la fonction courante (return en cpp)
+
+=====ARITHMETIQUE=====
+
+add xxx, xxx =>additionner 2 variables ou 2 nombres entre eux
+
+sub xxx, xxx =>susoutraire 2 variables ou 2 nombres entre eux
+
+mul xxx, xxx =>multiplier 2 variables ou 2 nombres entre eux
+
+div xxx, xxx =>diviser 2 variables ou 2 nombres entre eux
+
+pow xxx, xxx =>faire une puissance du nombre (ici souligné avec ~~) par l'indicateur de puissance (variable non soulignée)
+    ~~~
+
+sqr xxx     =>faire une racine carré
+
+=====LOGIQUE=========
+
+and xxx, xxx =>porte ET
+
+or xxx, xxx  =>porte OU
+
+nnd xxx, xxx =>porte Non-ET
+
+nor xxx, xxx =>porte Non-OU
+
+=====COMPARAISON=====
+
+cpr xxx, xxx =>comparer
+
+=====SAUTS===========
+
+jmp xxx     =>sauter (le saut de base)
+
+jpt xxx, xxx =>jump if true (saute seulement si la condition observé est vraie)
+    ~~~|~~~
+var t/f|destination
+
+jpf xxx, xxx =>jump if false (saute seulement si la condition observé est fausse)
+    ~~~|~~~
+var t/f|destination
+
+"nom du label": =>défini un label
+
+cal xxx     =>appelle une fonction
+
+=====HEADERS========
+
+Le header doit commencer par des commentaires expliquant le nom, la nature du header et son fonctionnement
+
+function xxx: =>début de la fonction
+	;système de la fonction
+endfunc       =>fin de la fonction
+
+====================
+
+Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur en 2 parties:
+-la partie principale qui est un compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire
+-la partie secondaire qui est un interpréteur codé en c++ (g++) et qui interprète le fichier binaire
