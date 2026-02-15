@@ -1,7 +1,7 @@
 Toutes les instructions du CASM (C++ asembly) et comment les utiliser.
 CASM version 2 beta.
 Tous droits réservés au dévelopeur du projet.
-Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli par une variable ou une constante.
+Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli.
 
 =====SECTIONS=====
 
@@ -61,6 +61,10 @@ nor xxx, xxx =>porte Non-OU
 
 cpr xxx, xxx =>comparer
 
+cpg xxx, xxx =>renvoit true si la variable en première position est plus grande que la deuxième
+
+lif xxx      =>renvoit true si la variable float observée possède une valeur différente de 0 après la virgule
+
 =====SAUTS===========
 
 jmp xxx     =>sauter (le saut de base)
@@ -87,7 +91,6 @@ endfunc       =>fin de la fonction
 
 ====================
 
-Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur, une VM (Virtual Machine ou interpreteur) et un dump:
--le compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire (little-endian)
--la VM ou interpréteur codé en c++ (g++) et qui interprète le fichier binaire
--le dump qui affiche dans la console le contenu brut du script compilé en binaire et en hexadécimal
+Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur en 2 parties:
+-la partie principale qui est un compilateur codé en c++ (ASM_compiler) et qui traduit le script casm en script binaire
+-la partie secondaire qui est un interpréteur codé en c++ (g++) et qui interprète le fichier binaire
