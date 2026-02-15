@@ -22,6 +22,7 @@ enum OpCode {
     OR,
     NND,
     NOR,
+    LIF,
     LCT,
     CPR,
     CPG,
@@ -33,7 +34,7 @@ enum OpCode {
 };
 
 struct Variable {
-    uint8_t type; // 1=int, 2=string, 3=float
+    uint8_t type; // 1=int, 2=string, 3=float, 4=bool
     int i = 0;
     float f = 0.0f;
     std::string s;
@@ -67,10 +68,10 @@ private:
 
     std::vector<uint16_t> callStack;
 
-    uint8_t  r8();
+    uint8_t r8();
     uint16_t r16();
-    int32_t  r32();
-    float    rFloat();
+    int32_t r32();
+    float rFloat();
 
     Operand readOperand();
     void exec(uint8_t op);
@@ -244,15 +245,40 @@ void VM::exec(uint8_t op) {
         case NOR: {
             Operand a = readOperand();
             Operand b = readOperand();
-            uint8_t d = a.isConst ? b.var : a.var;
 
             int v1 = a.isConst ? a.i : vars[a.var].i;
             int v2 = b.isConst ? b.i : vars[b.var].i;
 
-            if (op == AND) vars[d].i = v1 && v2;
-            if (op == OR)  vars[d].i = v1 || v2;
-            if (op == NND) vars[d].i = !(v1 && v2);
-            if (op == NOR) vars[d].i = !(v1 || v2);
+            //verifie que ce sont des bools (0 ou 1)
+            if ((v1 != 0 && v1 != 1) || (v2 != 0 && v2 != 1)) {
+                std::cerr << "Erreur: porte logique utilisée sur non-bool\n";
+                running = false;
+                return;
+            }
+
+            switch(op) {
+                case AND: flag = v1 && v2; break;
+                case OR:  flag = v1 || v2; break;
+                case NND: flag = !(v1 && v2); break;
+                case NOR: flag = !(v1 || v2); break;
+            }
+            break;
+        }
+
+        case LIF: {
+            Operand o = readOperand();
+
+            float val;
+            if (o.isConst) val =o.f;
+            else {
+                if (vars[o.var].type != 3) {
+                    std::cerr << "Erreur: LIF attend un float\n";
+                    running = false;
+                    return;
+                }
+                val = vars[o.var].f;
+            }
+            flag = (std::fmod(val, 1.0f) == 0.0f); //true si pas de decimale
             break;
         }
 

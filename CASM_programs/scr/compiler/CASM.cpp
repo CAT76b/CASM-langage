@@ -27,6 +27,7 @@ enum OpCode {
     OR,
     NND,
     NOR,
+    LIF,
     LCT,
     CPR,
     CPG,
@@ -110,7 +111,7 @@ int main(int argc, char** argv) {
 
     //variables
     std::vector<std::string> varOrder;
-    std::unordered_map<std::string, uint8_t> varType; //1=int 2=str 3=float
+    std::unordered_map<std::string, uint8_t> varType; //1=int 2=str 3=float 4=bool
     std::unordered_map<std::string, int>    intVars;
     std::unordered_map<std::string, float>  floatVars;
     std::unordered_map<std::string, std::string> strVars;
@@ -270,6 +271,7 @@ int main(int argc, char** argv) {
             else if (cmd == "or")  code.push_back(OR);
             else if (cmd == "nnd") code.push_back(NND);
             else if (cmd == "nor") code.push_back(NOR);
+            else if (cmd == "lif") code.push_back(LIF);
             else continue;
 
             encodeOperand(a, hasVar);
