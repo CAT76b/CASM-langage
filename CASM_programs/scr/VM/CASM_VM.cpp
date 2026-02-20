@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include <cmath>
+#include <random>
 
 enum OpCode {
     CRT = 1,
@@ -18,6 +19,7 @@ enum OpCode {
     DIV,
     POW,
     SQR,
+    RND,
     AND,
     OR,
     NND,
@@ -30,6 +32,8 @@ enum OpCode {
     JPT,
     JPF,
     CAL,
+    PSH,
+    LOD,
     RET
 };
 
@@ -67,6 +71,7 @@ private:
     bool flag = false;
 
     std::vector<uint16_t> callStack;
+    std::vector<Variable> dataStack;
 
     uint8_t r8();
     uint16_t r16();
@@ -169,15 +174,16 @@ bool VM::load(const std::string& file) {
 
 void VM::run() {
     while (running && pc < code.size()) {
-        exec(r8());
+        uint8_t op = r8();
+        if (debug_mode) std::cout << "[DEBUG] EXEC OPCODE=" << (int)op << " AT PC=" << (pc - 1) << std::endl;
+        exec(op);
     }
 }
 
 void VM::exec(uint8_t op) {
     switch (op) {
-
         case PRT_VAR: {
-            uint8_t varIndex = r8();  // Lit l'index de la variable
+            uint8_t varIndex = r8(); //lit l'index de la variable
             if (vars[varIndex].type == 1) std::cout << vars[varIndex].i;
             else if (vars[varIndex].type == 3) std::cout << vars[varIndex].f;
             else {
@@ -187,16 +193,31 @@ void VM::exec(uint8_t op) {
             }
             break;
         } case PRT_STR: {
-            uint16_t strIndex = r16();  // Lit 2 bytes (uint16_t)
+            uint16_t strIndex = r16(); //lit 2 bytes (uint16_t)
             if (strIndex < strings.size()) std::cout << strings[strIndex];
             else std::cout << "[INVALID_STR]";
             break;
-        }
+        } case SET: {
+            uint8_t dst = code[pc++]; //destination
+            uint8_t src = code[pc++]; //source
 
-        case SET: {
-            uint8_t i = r8();
-            if (vars[i].type == 3) vars[i].f = rFloat();
-            else vars[i].i = r32();
+            //copie la valeur selon le type
+            vars[dst].type = vars[src].type;
+            switch (vars[src].type) {
+                case 1: //int
+                    vars[dst].i = vars[src].i;
+                    break;
+                case 3: //float
+                    vars[dst].f = vars[src].f;
+                    break;
+                case 2: //string
+                    vars[dst].s = vars[src].s;
+                    break;
+                case 4: //bool
+                    vars[dst].i = vars[src].i;
+                    break;
+            }
+            if (debug_mode) std::cout << "[DEBUG] SET var " << (int)dst << " = var " << (int)src << std::endl;
             break;
         }
 
@@ -208,34 +229,84 @@ void VM::exec(uint8_t op) {
             Operand a = readOperand();
             Operand b = readOperand();
 
-            if (a.isConst && b.isConst) { running = false; return; }
+            if (a.isConst) {
+                std::cerr << "Erreur: destination ne peut pas etre constante" << std::endl;
+                running = false;
+                return;
+            }
 
-            uint8_t d = a.isConst ? b.var : a.var;
-            bool fl = a.isFloat || b.isFloat || vars[d].type == 3;
+            uint8_t d = a.var;
 
-            float v1 = a.isConst ? (a.isFloat ? a.f : a.i)
-                                : (vars[a.var].type == 3 ? vars[a.var].f : vars[a.var].i);
-            float v2 = b.isConst ? (b.isFloat ? b.f : b.i)
-                                : (vars[b.var].type == 3 ? vars[b.var].f : vars[b.var].i);
+            if (d >= vars.size()) {
+                std::cerr << "Index variable invalide" << std::endl;
+                running = false;
+                return;
+            }
 
+            float v1 = (vars[d].type == 3) ? vars[d].f : vars[d].i;
+            float v2 = b.isConst ? (b.isFloat ? b.f : b.i) : (vars[b.var].type == 3 ? vars[b.var].f : vars[b.var].i);
             float r = 0;
-            if (op == ADD) r = v1 + v2;
-            if (op == SUB) r = v1 - v2;
-            if (op == MUL) r = v1 * v2;
-            if (op == DIV) r = v1 / v2;
-            if (op == POW) r = std::pow(v1, v2);
 
-            if (fl) vars[d].f = r;
+            switch(op) {
+                case ADD:
+                    r = v1 + v2;
+                    if (debug_mode) std::cout << "[DEBUG] ADD: " << v1 << " + " << v2 << " = " << r << std::endl;
+                    break;
+                case SUB:
+                    r = v1 - v2;
+                    if (debug_mode) std::cout << "[DEBUG] SUB: " << v1 << " - " << v2 << " = " << r << std::endl;
+                    break;
+                case MUL:
+                    r = v1 * v2;
+                    if (debug_mode) std::cout << "[DEBUG] MUL: " << v1 << " * " << v2 << " = " << r << std::endl;
+                    break;
+                case DIV:
+                    r = v1 / v2;
+                    if (debug_mode) std::cout << "[DEBUG] DIV: " << v1 << " / " << v2 << " = " << r << std::endl;
+                    break;
+                case POW:
+                    r = std::pow(v1, v2);
+                    if (debug_mode) std::cout << "[DEBUG] POW: " << v1 << " ** " << v2 << " = " << r << std::endl;
+                    break;
+            }
+
+            if (vars[d].type == 3) vars[d].f = r;
             else vars[d].i = (int)r;
-            break;
-        }
 
-        case SQR: {
+            break;
+        } case SQR: {
             Operand o = readOperand();
-            if (vars[o.var].type == 3)
-                vars[o.var].f = std::sqrt(vars[o.var].f);
-            else
-                vars[o.var].i = (int)std::sqrt(vars[o.var].i);
+            if (vars[o.var].type == 3) vars[o.var].f = std::sqrt(vars[o.var].f);
+            else vars[o.var].i = (int)std::sqrt(vars[o.var].i);
+            if (debug_mode) {
+                if (vars[o.var].type == 3) std::cout << "[DEBUG] SQR: sqrt(" << vars[o.var].f << ") = " << vars[o.var].f << std::endl;
+                else std::cout << "[DEBUG] SQR: sqrt(" << vars[o.var].i << ") = " << vars[o.var].i << std::endl;
+            }
+            break;
+        } case RND: {
+            uint8_t varIndex = r8();
+            Operand maximum = readOperand();
+
+            int max_val = 0;
+            if (maximum.isConst) max_val = maximum.i;
+            else {
+                if (vars[maximum.var].type != 1) {
+                    std::cerr << "RND: second argument doit etre un int" << std::endl;
+                    running = false;
+                    return;
+                }
+                max_val = vars[maximum.var].i;
+            }
+
+            if (vars[varIndex].type != 1) {
+                std::cerr << "RND: variable cible doit etre un int" << std::endl;
+                running = false;
+                return;
+            }
+
+            vars[varIndex].i = std::rand() % max_val;
+
+            if (debug_mode) std::cout << "[DEBUG] RND: rand num generated = " << vars[varIndex].i << " in var " << (int)varIndex << std::endl;
             break;
         }
 
@@ -251,38 +322,47 @@ void VM::exec(uint8_t op) {
 
             //verifie que ce sont des bools (0 ou 1)
             if ((v1 != 0 && v1 != 1) || (v2 != 0 && v2 != 1)) {
-                std::cerr << "Erreur: porte logique utilisée sur non-bool\n";
+                std::cerr << "Erreur: porte logique utilisée sur non-bool" << std::endl;
                 running = false;
                 return;
             }
 
             switch(op) {
-                case AND: flag = v1 && v2; break;
-                case OR:  flag = v1 || v2; break;
-                case NND: flag = !(v1 && v2); break;
-                case NOR: flag = !(v1 || v2); break;
+                case AND:
+                    flag = v1 && v2;
+                    if (debug_mode) std::cout << "[DEBUG] AND: " << v1 << " && " << v2 << " = " << flag << std::endl;
+                    break;
+                case OR:
+                    flag = v1 || v2;
+                    if (debug_mode) std::cout << "[DEBUG] OR: " << v1 << " || " << v2 << " = " << flag << std::endl;
+                    break;
+                case NND:
+                    flag = !(v1 && v2);
+                    if (debug_mode) std::cout << "[DEBUG] NND: !(" << v1 << " && " << v2 << ") = " << flag << std::endl;
+                    break;
+                case NOR:
+                    flag = !(v1 || v2);
+                    if (debug_mode) std::cout << "[DEBUG] NOR: !(" << v1 << " || " << v2 << ") = " << flag << std::endl;
+                    break;
             }
             break;
-        }
-
-        case LIF: {
+        } case LIF: {
             Operand o = readOperand();
 
             float val;
             if (o.isConst) val =o.f;
             else {
                 if (vars[o.var].type != 3) {
-                    std::cerr << "Erreur: LIF attend un float\n";
+                    std::cerr << "Erreur: LIF attend un float" << std::endl;
                     running = false;
                     return;
                 }
                 val = vars[o.var].f;
             }
             flag = (std::fmod(val, 1.0f) == 0.0f); //true si pas de decimale
+            if (debug_mode) std::cout << "[DEBUG] LIF: " << val << " = int?: " << flag << std::endl;
             break;
-        }
-
-        case CPR: {
+        } case CPR: {
             Operand a = readOperand();
             Operand b = readOperand();
 
@@ -293,8 +373,7 @@ void VM::exec(uint8_t op) {
                 std::string s2 = (idx2 < strings.size()) ? strings[idx2] : "";
                 flag = (s1 == s2);
 
-                if (debug_mode) std::cout << "[DEBUG] CPR (str): " << s1 << " == " << s2
-                                << " ? " << flag << std::endl;
+                if (debug_mode) std::cout << "[DEBUG] CPR (str): " << s1 << " == " << s2 << " ? " << flag << std::endl;
                 break;
             }
 
@@ -327,9 +406,7 @@ void VM::exec(uint8_t op) {
 
             if (debug_mode) std::cout << "[DEBUG] CPG: " << v1 << " > " << v2 << " ? " << flag << std::endl;
             break;
-        }
-
-        case LCT: {
+        } case LCT: {
             uint8_t i = r8();
             std::string input;
             std::cin >> std::ws; 
@@ -343,33 +420,83 @@ void VM::exec(uint8_t op) {
                 strings.push_back(input);
                 vars[i].i = strings.size() - 1;
             }
+
+            if (debug_mode) {
+                std::cout << "[DEBUG] LCT: var " << i << " = " << input << std::endl;
+                std::cout << "[DEBUG INPUT RAW] " << input << std::endl;
+            }
             break;
         } case JPT: {
             uint16_t addr = r16();
-            if (debug_mode) std::cout << "[DEBUG] JPT to 0x" << std::hex << addr << " (flag=" << flag << ")" << std::endl;
+            if (debug_mode) std::cout << "[DEBUG] JPT: to 0x" << std::hex << addr << " (flag=" << flag << ")" << std::endl;
             if (flag) pc = addr;
             break;
         } case JMP: {
-            pc = r16(); //saute toujours a l'adresse lue
-            break;
-        } case JPF: { uint16_t a = r16(); if (!flag) pc = a; break; }
-
-        case CAL: {
-            callStack.push_back(pc);
             pc = r16();
+            if (debug_mode) std::cout << "[DEBUG] JMP: to 0x" << std::hex << pc << " (flag=" << flag << ")" << std::endl;
             break;
+        } case JPF: {
+            uint16_t a = r16();
+            if (!flag) pc = a;
+            if (debug_mode) std::cout << "[DEBUG] JPF: to 0x" << std::hex << a << " (flag=" << flag << ")" << std::endl;
+            break;
+        } case CAL: {
+            uint16_t addr = r16();
+            callStack.push_back(pc);
+            pc = addr;
+            if (debug_mode) std::cout << "[DEBUG] CAL: to 0x" << std::hex << addr << " (flag=" << flag << ")" << std::endl;
+            break;
+        } case PSH: {
+            Operand o = readOperand();
+            Variable v;
 
+            if (o.isConst) {
+                if (o.isFloat) {
+                    v.type = 3;
+                    v.f = o.f;
+                } else {
+                    v.type = 1;
+                    v.i = o.i;
+                }
+            } else v = vars[o.var];
+
+            dataStack.push_back(v);
+
+            if (debug_mode) std::cout << "[DEBUG] PSH: stack size = " << dataStack.size() << std::endl;
+            break;
+        } case LOD: {
+            uint8_t dst = r8();
+
+            if (dataStack.empty()) {
+                std::cerr << "Stack underflow" << std::endl;
+                running = false;
+                return;
+            } else if (dataStack.size() > 256) {
+                std::cerr << "Data stack overflow" << std::endl;
+                running = false;
+            }
+
+            vars[dst] = dataStack.back();
+            dataStack.pop_back();
+
+            if (debug_mode) std::cout << "[DEBUG] LOD: var " << (int)dst << " loaded, stack size = " << dataStack.size() << std::endl;
+            break;
         } case RET: {
             if (callStack.empty()) running = false;
-            else { pc = callStack.back(); callStack.pop_back(); }
+            else {
+                pc = callStack.back();
+                callStack.pop_back();
+            }
+            if (debug_mode) std::cout << "[DEBUG] RET: returning to 0x" << std::hex << pc << " (flag=" << flag << ")" << std::endl;
             break;
 
         } case EXT: {
             running = false;
+            if (debug_mode) std::cout << "[DEBUG] EXT: exiting program" << std::endl;
             break;
 
         } default: {
-            std::cerr << "Opcode inconnu: " << (int)op << "\n";
+            std::cerr << "Opcode inconnu: " << (int)op << std::endl;
             running = false;
         }
     }
@@ -377,14 +504,14 @@ void VM::exec(uint8_t op) {
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cout << "Usage: casm_vm program.bin\n";
+        std::cout << "Usage: casm_vm program.bin" << std::endl;
         return 1;
     }
 
     bool debug_mode = false;
     std::string filename;
 
-    //verifie si -debug est présent
+    //verifie si -debug est present
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "-debug") {
             debug_mode = true;
@@ -393,9 +520,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    VM vm(debug_mode); // Passe le mode debug à la VM
+    VM vm(debug_mode); //passe le mode debug a la VM
     if (!vm.load(filename)) {
-        std::cerr << "Erreur chargement CASM\n";
+        std::cerr << "Erreur chargement CASM" << std::endl;
         return 1;
     }
     vm.run();

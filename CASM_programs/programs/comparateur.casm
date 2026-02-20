@@ -63,4 +63,3 @@ lancement:
     jmp lancement
 
 ext ;securite
-

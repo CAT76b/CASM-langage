@@ -24,9 +24,11 @@ prt |-> xxx   =>affiche le contenu de la variable
 
 lct xxx =>lit une entrée et la met dans la variable indiquée
 
-xxx xxx =>appelle une fonction de header ("nom de la fonction" "variable à observer")
+header "xxx.casm" =>appelle un header
 
-header xxx =>appelle un header
+psh xxx =>met la variable indiquée dans la stack pour les donner comme argument à une fonction externe
+
+lod xxx =>charge la première variable de la stack dans la variable spécifiée
 
 ext  	=>arrete le programme
 
@@ -69,25 +71,17 @@ lif xxx      =>renvoit true si la variable float observée possède une valeur d
 
 jmp xxx     =>sauter (le saut de base)
 
-jpt xxx, xxx =>jump if true (saute seulement si la condition observé est vraie)
-    ~~~|~~~
-var t/f|destination
+jpt xxx =>jump if true (saute seulement si la condition observé est vraie)
+    ~~~
+destination
 
-jpf xxx, xxx =>jump if false (saute seulement si la condition observé est fausse)
-    ~~~|~~~
-var t/f|destination
+jpf xxx =>jump if false (saute seulement si la condition observé est fausse)
+    ~~~
+destination
 
 "nom du label": =>défini un label
 
-cal xxx     =>appelle une fonction
-
-=====HEADERS========
-
-Le header doit commencer par des commentaires expliquant le nom, la nature du header et son fonctionnement
-
-function xxx: =>début de la fonction
-	;système de la fonction
-endfunc       =>fin de la fonction
+cal xxx         =>appelle une fonction locale ou externe (header)
 
 ====================
 
