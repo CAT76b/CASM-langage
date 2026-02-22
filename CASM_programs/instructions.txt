@@ -19,8 +19,8 @@ set xxx, xxx =>change la valeur d'une variable (variable soulignée avec ~~)
 
 =====ORDRES===========
 
-prt |-> xxx   =>affiche le contenu de la variable
-	|-> "xxx" =>affiche le texte brut
+prt --> xxx   =>affiche le contenu de la variable
+	\-> "xxx" =>affiche le texte brut
 
 lct xxx =>lit une entrée et la met dans la variable indiquée
 
@@ -33,6 +33,12 @@ lod xxx =>charge la première variable de la stack dans la variable spécifiée
 ext  	=>arrete le programme
 
 ret  	=>retour à la fonction courante (return en cpp)
+
+rnd xxx, y =>génère un nombre aléatoire entre 0 et y stocké dans la variable (ici représentée par xxx)
+
+slp xxx    =>marque un temps d'arret spécifié en millisecondes (int ou float)
+
+tme xxx    =>récupère le time stamp actuel en secondes et le stocke dans la variable spécifiée (float)
 
 =====ARITHMETIQUE=====
 

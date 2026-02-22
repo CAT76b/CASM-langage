@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <cmath>
 #include <random>
+#include <chrono>
+#include <ctime>
+#include <thread>
 
 enum OpCode {
     CRT = 1,
@@ -34,11 +37,13 @@ enum OpCode {
     CAL,
     PSH,
     LOD,
-    RET
+    RET,
+    SLP,
+    TME
 };
 
 struct Variable {
-    uint8_t type; // 1=int, 2=string, 3=float, 4=bool
+    uint8_t type; //1=int, 2=string, 3=float, 4=bool
     int i = 0;
     float f = 0.0f;
     std::string s;
@@ -59,7 +64,6 @@ public:
     void run();
 
 private:
-
     bool debug_mode;
 
     std::vector<Variable> vars;
@@ -481,6 +485,25 @@ void VM::exec(uint8_t op) {
 
             if (debug_mode) std::cout << "[DEBUG] LOD: var " << (int)dst << " loaded, stack size = " << dataStack.size() << std::endl;
             break;
+        } case SLP: {
+            Operand o = readOperand();
+            int ms = o.isConst ? o.i : (vars[o.var].type == 3 ? (int)vars[o.var].f : vars[o.var].i);
+            if (debug_mode) std::cout << "[DEBUG] SLP: waiting " << ms << "ms" << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            break;
+        } case TME: {
+            uint8_t dst = r8();
+            int timestamp = static_cast<int>(std::time(nullptr));
+            
+            if (vars[dst].type == 1) vars[dst].i = timestamp;
+            else if (vars[dst].type == 3) vars[dst].f = (float)timestamp;
+            else {
+                std::cerr << "TME: La variable destination doit etre i_ ou f_" << std::endl;
+                running = false;
+            }
+            
+            if (debug_mode) std::cout << "[DEBUG] TME: stored " << timestamp << " in var " << (int)dst << std::endl;
+            break;
         } case RET: {
             if (callStack.empty()) running = false;
             else {
@@ -503,6 +526,8 @@ void VM::exec(uint8_t op) {
 }
 
 int main(int argc, char** argv) {
+    std::srand(std::time(nullptr)); //pour rendre rnd encore plus random
+
     if (argc < 2) {
         std::cout << "Usage: casm_vm program.bin" << std::endl;
         return 1;
@@ -513,11 +538,8 @@ int main(int argc, char** argv) {
 
     //verifie si -debug est present
     for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "-debug") {
-            debug_mode = true;
-        } else {
-            filename = argv[i];
-        }
+        if (std::string(argv[i]) == "-debug") debug_mode = true;
+        else filename = argv[i];
     }
 
     VM vm(debug_mode); //passe le mode debug a la VM

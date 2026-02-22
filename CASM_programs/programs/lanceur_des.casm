@@ -1,0 +1,18 @@
+section.data
+crt s_reponse, ""
+crt s_yes, "y"
+crt s_no, "n"
+
+section.code
+prt "Bonjour!\n"
+main:
+    prt "Lancer[y/n]?:"
+    lct s_reponse
+    cpr s_reponse, s_yes
+    jpt lancer_des
+    cpr s_reponse, s_no
+    jpt end
+    jmp error
+
+lancer_des:
+    prt "Le de roule"

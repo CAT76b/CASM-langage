@@ -41,7 +41,9 @@ enum OpCode {
     CAL,
     PSH,
     LOD,
-    RET
+    RET,
+    SLP,
+    TME
 };
 
 struct Fixup {
@@ -286,7 +288,8 @@ int main(int argc, char** argv) {
         }
 
         if (cmd == "lct") {
-            std::string arg; iss >> arg;
+            std::string arg;
+            iss >> arg;
             code.push_back(LCT);
             code.push_back(varIndex(stripComma(arg)));
             continue;
@@ -303,7 +306,8 @@ int main(int argc, char** argv) {
 
         if (cmd == "cal" || cmd == "jmp" || cmd == "jpt" || cmd == "jpf") {
             uint8_t op = (cmd == "cal") ? CAL : (cmd == "jmp") ? JMP : (cmd == "jpt") ? JPT : JPF;
-            std::string lbl; iss >> lbl;
+            std::string lbl;
+            iss >> lbl;
             code.push_back(op);
             fixups.push_back({lbl, code.size()});
             code.push_back(0); code.push_back(0);
@@ -311,7 +315,8 @@ int main(int argc, char** argv) {
         }
 
         if (cmd == "sqr") {
-            std::string a; iss >> a;
+            std::string a;
+            iss >> a;
             code.push_back(SQR);
             bool hv = false;
             encodeOperand(stripComma(a), hv);
@@ -319,7 +324,8 @@ int main(int argc, char** argv) {
         }
 
         if (cmd == "psh") {
-            std::string arg; iss >> arg;
+            std::string arg;
+            iss >> arg;
             code.push_back(PSH);
             bool hasVar = false;
             encodeOperand(stripComma(arg), hasVar);
@@ -330,6 +336,23 @@ int main(int argc, char** argv) {
             std::string arg;
             iss >> arg;
             code.push_back(LOD);
+            code.push_back(varIndex(stripComma(arg)));
+            continue;
+        }
+
+        if (cmd == "slp") {
+            std::string arg;
+            iss >> arg;
+            bool hv = false;
+            code.push_back(SLP);
+            encodeOperand(stripComma(arg), hv);
+            continue;
+        }
+
+        if (cmd == "tme") {
+            std::string arg;
+            iss >> arg;
+            code.push_back(TME);
             code.push_back(varIndex(stripComma(arg)));
             continue;
         }
