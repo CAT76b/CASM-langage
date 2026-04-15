@@ -10,6 +10,9 @@
 #include <ctime>
 #include <thread>
 
+/*WARNING! ce code doit etre compile en static sinon y aura des crashs silencieux
+    a cause d'un mauvais linkage*/
+
 enum OpCode {
     CRT = 1,
     SET,
@@ -86,9 +89,7 @@ private:
     void exec(uint8_t op);
 };
 
-uint8_t VM::r8() {
-    return code[pc++];
-}
+uint8_t VM::r8() { return code[pc++]; }
 
 uint16_t VM::r16() {
     uint16_t v = code[pc] | (code[pc + 1] << 8);
@@ -126,60 +127,61 @@ Operand VM::readOperand() {
         o.isConst = true;
         o.isFloat = true;
         o.f = rFloat();
-    } else {
-        o.var = m;
-    }
+    } else o.var = m;
     return o;
 }
 
-bool VM::load(const std::string& file) {
-    std::ifstream f(file, std::ios::binary);
+bool VM::load(const std::string& filename) {
+    std::ifstream f(filename, std::ios::binary);
     if (!f) return false;
 
-    char magic[4];
-    f.read(magic, 4);
-    if (std::string(magic, 4) != "CASM") return false;
+    //skip header
+    f.seekg(7, std::ios::beg); 
 
-    uint8_t version;
-    uint16_t entry;
-    f.read((char*)&version, 1);
-    f.read((char*)&entry, 2);
-    pc = entry;
-
+    //1. variables
     uint16_t varCount;
     f.read((char*)&varCount, 2);
-    vars.resize(varCount);
-
-    for (auto& v : vars) {
-        f.read((char*)&v.type, 1);
-        f.ignore(1);
-        if (v.type == 3) f.read((char*)&v.f, 4);
-        else f.read((char*)&v.i, 4);
+    vars.assign(varCount, Variable());
+    for (int i = 0; i < varCount; ++i) {
+        f.read((char*)&vars[i].type, 1);
+        f.ignore(1); 
+        f.read((char*)&vars[i].i, 4);
     }
 
+    //2. chaines
     uint16_t strCount;
     f.read((char*)&strCount, 2);
-    strings.resize(strCount);
-
-    for (auto& s : strings) {
+    strings.assign(strCount, "");
+    for (int i = 0; i < strCount; ++i) {
         uint16_t len;
         f.read((char*)&len, 2);
-        s.resize(len);
-        f.read(&s[0], len);
+        if(len > 0) {
+            strings[i].resize(len);
+            f.read(&strings[i][0], len);
+        }
     }
 
-    uint16_t funcCount;
-    f.read((char*)&funcCount, 2);
-    f.ignore(2);
-
+    //3. code
+    code.clear();
     code.assign(std::istreambuf_iterator<char>(f), {});
-    return true;
+    
+    pc = 0; //on commence au debut du vecteur 'code'
+    f.close();
+    return (code.size() > 0);
 }
 
 void VM::run() {
+    if (debug_mode) {
+        std::cout << "---LANCEMENT VM---" << std::endl;
+        std::cout << "Taille du code chargee : " << code.size() << " octets" << std::endl;
+    }
+    
+    if (code.empty()) return;
+
+    running = true;
     while (running && pc < code.size()) {
         uint8_t op = r8();
-        if (debug_mode) std::cout << "[DEBUG] EXEC OPCODE=" << (int)op << " AT PC=" << (pc - 1) << std::endl;
+        if (debug_mode) std::cout << "Execution PC=" << (pc - 1) << " | Opcode=" << (int)op << std::endl;
         exec(op);
     }
 }
@@ -215,7 +217,7 @@ void VM::exec(uint8_t op) {
                     vars[dst].f = vars[src].f;
                     break;
                 case 2: //string
-                    vars[dst].s = vars[src].s;
+                    vars[dst].i = vars[src].i;
                     break;
                 case 4: //bool
                     vars[dst].i = vars[src].i;
@@ -225,7 +227,65 @@ void VM::exec(uint8_t op) {
             break;
         }
 
-        case ADD:
+        case ADD: {
+            Operand a = readOperand();
+            Operand b = readOperand();
+
+            if (a.isConst) {
+                std::cerr << "Erreur: destination ne peut pas etre constante" << std::endl;
+                running = false;
+                return;
+            }
+
+            uint8_t d = a.var;
+
+            if (d >= vars.size()) {
+                std::cerr << "Index variable invalide" << std::endl;
+                running = false;
+                return;
+            }
+
+            //concatenation de strings
+            if (vars[d].type == 2) {
+                if (b.isConst) {
+                    std::cerr << "Erreur: impossible d'utiliser une constante dans une operation string" << std::endl;
+                    running = false;
+                    return;
+                }
+                if (vars[b.var].type != 2) {
+                    std::cerr << "Erreur ADD string: operande doit etre une string" << std::endl;
+                    running = false;
+                    return;
+                }
+
+                uint32_t idx1 = vars[d].i;
+                uint32_t idx2 = vars[b.var].i;
+
+                if (idx1 >= strings.size() || idx2 >= strings.size()) {
+                    std::cerr << "Index string invalide" << std::endl;
+                    running = false;
+                    return;
+                }
+
+                std::string newStr = strings[idx1] + strings[idx2];
+                strings.push_back(newStr);
+                vars[d].i = strings.size() - 1;
+
+                if (debug_mode) std::cout << "[DEBUG] ADD (string): '" << strings[idx1] << "' + '" << strings[idx2] << "' = '" << newStr << "'" << std::endl;
+            } else {
+                //addition arithmetique
+                float v1 = (vars[d].type == 3) ? vars[d].f : vars[d].i;
+                float v2 = b.isConst ? (b.isFloat ? b.f : b.i) : (vars[b.var].type == 3 ? vars[b.var].f : vars[b.var].i);
+                float r = v1 + v2;
+
+                if (vars[d].type == 3) vars[d].f = r;
+                else vars[d].i = (int)r;
+
+                if (debug_mode) std::cout << "[DEBUG] ADD: " << v1 << " + " << v2 << " = " << r << std::endl;
+            }
+            break;
+        }
+
         case SUB:
         case MUL:
         case DIV:
@@ -252,10 +312,6 @@ void VM::exec(uint8_t op) {
             float r = 0;
 
             switch(op) {
-                case ADD:
-                    r = v1 + v2;
-                    if (debug_mode) std::cout << "[DEBUG] ADD: " << v1 << " + " << v2 << " = " << r << std::endl;
-                    break;
                 case SUB:
                     r = v1 - v2;
                     if (debug_mode) std::cout << "[DEBUG] SUB: " << v1 << " - " << v2 << " = " << r << std::endl;
@@ -413,20 +469,32 @@ void VM::exec(uint8_t op) {
         } case LCT: {
             uint8_t i = r8();
             std::string input;
-            std::cin >> std::ws; 
-            
-            if (vars[i].type == 2) std::getline(std::cin, input);
-            else std::cin >> input;
+            std::getline(std::cin >> std::ws, input);
 
-            if (vars[i].type == 3) vars[i].f = std::stof(input);
-            else if (vars[i].type == 1) vars[i].i = std::stoi(input);
-            else {
+            if (vars[i].type == 2) {
+                strings.push_back(input);
+                vars[i].i = strings.size() - 1;
+            } else if (vars[i].type == 3) {
+                try {
+                    vars[i].f = std::stof(input);
+                } catch (const std::exception& e) {
+                    if (debug_mode) std::cout << "[DEBUG] LCT parse float failed: '" << input << "' -> 0\n";
+                    vars[i].f = 0.0f;
+                }
+            } else if (vars[i].type == 1) {
+                try {
+                    vars[i].i = std::stoi(input);
+                } catch (const std::exception& e) {
+                    if (debug_mode) std::cout << "[DEBUG] LCT parse int failed: '" << input << "' -> 0\n";
+                    vars[i].i = 0;
+                }
+            } else {
                 strings.push_back(input);
                 vars[i].i = strings.size() - 1;
             }
 
             if (debug_mode) {
-                std::cout << "[DEBUG] LCT: var " << i << " = " << input << std::endl;
+                std::cout << "[DEBUG] LCT: var " << (int)i << " = " << input << std::endl;
                 std::cout << "[DEBUG INPUT RAW] " << input << std::endl;
             }
             break;

@@ -399,7 +399,7 @@ int main(int argc, char** argv) {
     //=====ECRITURE DU BINAIRE=====
 
     out.write("CASM", 4);
-    uint8_t ver = 1;
+    uint8_t ver = 3;
     out.write((char*)&ver, 1);
     uint16_t entry = labels.count("main") ? labels["main"] : 0;
     out.write((char*)&entry, 2);
@@ -429,8 +429,8 @@ int main(int argc, char** argv) {
         out.write(s.c_str(), l);
     }
 
-    uint16_t fc = 0; out.write((char*)&fc, 2);
-    uint16_t res = 0; out.write((char*)&res, 2);
+    //uint16_t fc = 0; out.write((char*)&fc, 2);
+    //uint16_t res = 0; out.write((char*)&res, 2);
 
     for (auto& f : fixups) {
         if (labels.find(f.label) == labels.end()) {

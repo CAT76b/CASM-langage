@@ -23,7 +23,7 @@ end:
     prt "aurevoir!"
     ext
 
-;si les nombres sont égaux
+;si les nombres sont egaux
 egal:
     prt "\n"
     prt i_a
@@ -48,7 +48,6 @@ less:
     prt " est plus petit que "
     prt i_b
     prt "\n"
-    jmp lancement
 
 lancement:
     prt "lancer[y/n]?:"
