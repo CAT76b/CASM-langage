@@ -1,0 +1,50 @@
+section.data
+crt f_a, 0.0
+crt f_b, 0.0
+crt s_reponse, ""
+crt s_yes, "y"
+crt s_no, "n"
+
+section.code
+main:
+    prt "Bonjour!\n"
+    jmp start
+principal:
+    prt "Entrez un nombre:"
+    lct f_a
+    set f_b, f_a
+    div f_a, 2
+    lif f_a
+    jpt pair
+    jmp impair
+
+pair:
+    prt f_b
+    prt " est pair.\n"
+    jmp start
+
+impair:
+    prt f_b
+    prt " est impair.\n"
+    jmp start
+
+end:
+    prt "Aurevoir!"
+    ext
+
+error:
+    prt "Erreur:"
+    prt "\nVeuillez entrer \"y\" ou \"n\".\n"
+    ret
+
+start:
+    prt "Lancer[y/n]?:"
+    lct s_reponse
+    cpr s_reponse, s_yes
+    jpt principal
+    cpr s_reponse, s_no
+    jpt end
+    cal error
+    jmp start
+
+ext ;securite

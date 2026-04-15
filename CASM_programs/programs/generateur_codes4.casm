@@ -1,0 +1,464 @@
+section.data
+crt s_lancer, ""
+crt s_yes, "y"
+crt s_no, "n"
+crt i_iterations, 0
+crt i_longueur, 0
+crt i_genere, 0
+crt s_code, ""
+crt s_empty, ""
+crt i_loop, 0
+crt i_zero, 0
+crt i_loop2, 0
+crt s_A, "A"
+crt s_B, "B"
+crt s_C, "C"
+crt s_D, "D"
+crt s_E, "E"
+crt s_F, "F"
+crt s_G, "G"
+crt s_H, "H"
+crt s_I, "I"
+crt s_J, "J"
+crt s_K, "K"
+crt s_L, "L"
+crt s_M, "M"
+crt s_N, "N"
+crt s_O, "O"
+crt s_P, "P"
+crt s_Q, "Q"
+crt s_R, "R"
+crt s_S, "S"
+crt s_T, "T"
+crt s_U, "U"
+crt s_V, "V"
+crt s_W, "W"
+crt s_X, "X"
+crt s_Y, "Y"
+crt s_Z, "Z"
+crt s_a, "a"
+crt s_b, "b"
+crt s_c, "c"
+crt s_d, "d"
+crt s_e, "e"
+crt s_f, "f"
+crt s_g, "g"
+crt s_h, "h"
+crt s_i, "i"
+crt s_j, "j"
+crt s_k, "k"
+crt s_l, "l"
+crt s_m, "m"
+crt s_n, "n"
+crt s_o, "o"
+crt s_p, "p"
+crt s_q, "q"
+crt s_r, "r"
+crt s_s, "s"
+crt s_t, "t"
+crt s_u, "u"
+crt s_v, "v"
+crt s_w, "w"
+crt s_x, "x"
+crt s_y, "y"
+crt s_z, "z"
+crt s_n1, "1"
+crt s_n2, "2"
+crt s_n3, "3"
+crt s_n4, "4"
+crt s_n5, "5"
+crt s_n6, "6"
+crt s_n7, "7"
+crt s_n8, "8"
+crt s_n9, "9"
+crt s_n0, "0"
+
+section.code
+main:
+    prt "Bonjour!\n"
+start:
+    prt "Lancer[y/n]?:"
+    lct s_lancer
+    cpr s_lancer, s_yes
+    jpt principal
+    cpr s_lancer, s_no
+    jpt end
+    jmp error
+    
+principal:
+    set i_loop, i_zero
+    set i_loop2, i_zero
+    set i_genere, i_zero
+
+    prt "Combien d'iterations?:"
+    lct i_iterations
+    prt "Quelle longueur?:"
+    lct i_longueur
+    add i_longueur, 1
+    cpr i_iterations, 0
+    jpt error2
+    cpr i_longueur, 0
+    jpt error3
+    cpr i_loop2, i_iterations
+    jpt start
+
+generate_loop:
+    add i_loop2, 1
+    set i_loop, i_zero
+    set s_code, s_empty
+
+    cal generation
+    prt "Code numero "
+    prt i_loop2
+    prt ": "
+    prt s_code
+    prt "\n"
+
+    cpr i_loop2, i_iterations
+    jpf generate_loop
+    jmp start
+
+error:
+    prt "Erreur: entree invalide =>"
+    prt s_lancer
+    prt "\n"
+    jmp start
+error2:
+    prt "Erreur: nombre d'iterations doit etre superieur a 0\n"
+    jmp start
+error3:
+    prt "Erreur: la longueur doit etre superieur a 0\n"
+    jmp start
+
+end:
+    prt "Aurevoir!\n"
+    ext
+
+generation:
+loop:
+    ;gestion des boucles
+    add i_loop, 1
+    cpr i_loop, i_longueur
+    jpt loop_exit
+    
+    rnd i_genere, 62
+
+    ;selection du caractere a ajouter
+    cpr i_genere, 0
+    jpt A
+    cpr i_genere, 1
+    jpt B
+    cpr i_genere, 2
+    jpt C
+    cpr i_genere, 3
+    jpt D
+    cpr i_genere, 4
+    jpt E
+    cpr i_genere, 5
+    jpt F
+    cpr i_genere, 6
+    jpt G
+    cpr i_genere, 7
+    jpt H
+    cpr i_genere, 8
+    jpt I
+    cpr i_genere, 9
+    jpt J
+    cpr i_genere, 10
+    jpt K
+    cpr i_genere, 11
+    jpt L
+    cpr i_genere, 12
+    jpt M
+    cpr i_genere, 13
+    jpt N
+    cpr i_genere, 14
+    jpt O
+    cpr i_genere, 15
+    jpt P
+    cpr i_genere, 16
+    jpt Q
+    cpr i_genere, 17
+    jpt R
+    cpr i_genere, 18
+    jpt S
+    cpr i_genere, 19
+    jpt T
+    cpr i_genere, 20
+    jpt U
+    cpr i_genere, 21
+    jpt V
+    cpr i_genere, 22
+    jpt W
+    cpr i_genere, 23
+    jpt X
+    cpr i_genere, 24
+    jpt Y
+    cpr i_genere, 25
+    jpt Z
+    cpr i_genere, 26
+    jpt a
+    cpr i_genere, 27
+    jpt b
+    cpr i_genere, 28
+    jpt c
+    cpr i_genere, 29
+    jpt d
+    cpr i_genere, 30
+    jpt e
+    cpr i_genere, 31
+    jpt f
+    cpr i_genere, 32
+    jpt g
+    cpr i_genere, 33
+    jpt h
+    cpr i_genere, 34
+    jpt i
+    cpr i_genere, 35
+    jpt j
+    cpr i_genere, 36
+    jpt k
+    cpr i_genere, 37
+    jpt l
+    cpr i_genere, 38
+    jpt m
+    cpr i_genere, 39
+    jpt n
+    cpr i_genere, 40
+    jpt o
+    cpr i_genere, 41
+    jpt p
+    cpr i_genere, 42
+    jpt q
+    cpr i_genere, 43
+    jpt r
+    cpr i_genere, 44
+    jpt s
+    cpr i_genere, 45
+    jpt t
+    cpr i_genere, 46
+    jpt u
+    cpr i_genere, 47
+    jpt v
+    cpr i_genere, 48
+    jpt w
+    cpr i_genere, 49
+    jpt x
+    cpr i_genere, 50
+    jpt y
+    cpr i_genere, 51
+    jpt z
+    cpr i_genere, 52
+    jpt n1
+    cpr i_genere, 53
+    jpt n2
+    cpr i_genere, 54
+    jpt n3
+    cpr i_genere, 55
+    jpt n4
+    cpr i_genere, 56
+    jpt n5
+    cpr i_genere, 57
+    jpt n6
+    cpr i_genere, 58
+    jpt n7
+    cpr i_genere, 59
+    jpt n8
+    cpr i_genere, 60
+    jpt n9
+    cpr i_genere, 61
+    jpt n0
+
+loop_exit:
+    ret
+
+;ajout du caractere
+A:
+    add s_code, s_A
+    jmp loop
+B:
+    add s_code, s_B
+    jmp loop
+C:
+    add s_code, s_C
+    jmp loop
+D:
+    add s_code, s_D
+    jmp loop
+E:
+    add s_code, s_E
+    jmp loop
+F:
+    add s_code, s_F
+    jmp loop
+G:
+    add s_code, s_G
+    jmp loop
+H:
+    add s_code, s_H
+    jmp loop
+I:
+    add s_code, s_I
+    jmp loop
+J:
+    add s_code, s_J
+    jmp loop
+K:
+    add s_code, s_K
+    jmp loop
+L:
+    add s_code, s_L
+    jmp loop
+M:
+    add s_code, s_M
+    jmp loop
+N:
+    add s_code, s_N
+    jmp loop
+O:
+    add s_code, s_O
+    jmp loop
+P:
+    add s_code, s_P
+    jmp loop
+Q:
+    add s_code, s_Q
+    jmp loop
+R:
+    add s_code, s_R
+    jmp loop
+S:
+    add s_code, s_S
+    jmp loop
+T:
+    add s_code, s_T
+    jmp loop
+U:
+    add s_code, s_U
+    jmp loop
+V:
+    add s_code, s_V
+    jmp loop
+W:
+    add s_code, s_W
+    jmp loop
+X:
+    add s_code, s_X
+    jmp loop
+Y:
+    add s_code, s_Y
+    jmp loop
+Z:
+    add s_code, s_Z
+    jmp loop
+a:
+    add s_code, s_a
+    jmp loop
+b:
+    add s_code, s_b
+    jmp loop
+c:
+    add s_code, s_c
+    jmp loop
+d:
+    add s_code, s_d
+    jmp loop
+e:
+    add s_code, s_e
+    jmp loop
+f:
+    add s_code, s_f
+    jmp loop
+g:
+    add s_code, s_g
+    jmp loop
+h:
+    add s_code, s_h
+    jmp loop
+i:
+    add s_code, s_i
+    jmp loop
+j:
+    add s_code, s_j
+    jmp loop
+k:
+    add s_code, s_k
+    jmp loop
+l:
+    add s_code, s_l
+    jmp loop
+m:
+    add s_code, s_m
+    jmp loop
+n:
+    add s_code, s_n
+    jmp loop
+o:
+    add s_code, s_o
+    jmp loop
+p:
+    add s_code, s_p
+    jmp loop
+q:
+    add s_code, s_q
+    jmp loop
+r:
+    add s_code, s_r
+    jmp loop
+s:
+    add s_code, s_s
+    jmp loop
+t:
+    add s_code, s_t
+    jmp loop
+u:
+    add s_code, s_u
+    jmp loop
+v:
+    add s_code, s_v
+    jmp loop
+w:
+    add s_code, s_w
+    jmp loop
+x:
+    add s_code, s_x
+    jmp loop
+y:
+    add s_code, s_y
+    jmp loop
+z:
+    add s_code, s_z
+    jmp loop
+n1:
+    add s_code, s_n1
+    jmp loop
+n2:
+    add s_code, s_n2
+    jmp loop
+n3:
+    add s_code, s_n3
+    jmp loop
+n4:
+    add s_code, s_n4
+    jmp loop
+n5:
+    add s_code, s_n5
+    jmp loop
+n6:
+    add s_code, s_n6
+    jmp loop
+n7:
+    add s_code, s_n7
+    jmp loop
+n8:
+    add s_code, s_n8
+    jmp loop
+n9:
+    add s_code, s_n9
+    jmp loop
+n0:
+    add s_code, s_n0
+    jmp loop
+
+ext ;securite
+;magnus carlsen 2024-06
