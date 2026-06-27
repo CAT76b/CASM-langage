@@ -1,6 +1,0 @@
-module CASM_emulator
-typeinfo appCASM_emulator.qmltypes
-prefer :/qt/qml/CASM_emulator/
-Main 254.0 Main.qml
-depends QtQuick
-

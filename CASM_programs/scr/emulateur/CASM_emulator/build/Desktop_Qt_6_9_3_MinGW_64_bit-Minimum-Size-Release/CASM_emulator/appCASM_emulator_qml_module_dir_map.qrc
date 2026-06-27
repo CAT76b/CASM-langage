@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/">
-    <file alias="/qt/qml/CASM_emulator">C:/Users/amaca/Documents/CASM_programs/scr/emulateur/CASM_emulator/build/Desktop_Qt_6_9_3_MinGW_64_bit-Minimum-Size-Release/CASM_emulator</file>
-
-  </qresource>
-</RCC>
