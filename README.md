@@ -15,6 +15,8 @@ A custom programming language inspired by assembly, with a compiler and virtual 
   casm_vm <file_name>.bin
 - To use the dump, write:
   casm_dump <file_name>.bin
+- To use the emulator, write:
+  casm_emulator <scaling> <file_name.bin>
 - WARNING! To use commands, you should have configured your computer's path.
 
 ## STATUT
