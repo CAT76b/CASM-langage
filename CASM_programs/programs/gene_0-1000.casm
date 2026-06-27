@@ -1,0 +1,58 @@
+section.data
+crt s_reponse, ""
+crt s_y, "y"
+crt s_n, "n"
+crt i_iterations, 0
+crt i_code, 0
+crt i_loop, 0
+crt i_reference1, 9
+crt i_reference2, 99
+crt i_reset, 0
+
+section.code
+main:
+    prt "Launch[y/n]:"
+    lct s_reponse
+    cpr s_reponse, s_y
+    jpt start
+    cpr s_reponse, s_n
+    jpf error
+    ext
+error:
+    prt "Error: invalid entry> "
+    prt s_reponse
+    prt "\n"
+    jmp main
+
+;test des possibilitees de 0 au nombre indique
+start:
+    prt "how many iterations?:"
+    lct i_iterations
+generation:
+    cpg i_code, i_reference1
+    jpf 2zeros ;si inferieur a 10
+    cpg i_code, i_reference2
+    jpf 1zero ;si inferieur a 100
+    prt i_code
+    prt "\n"
+;calcul de la boucle
+suite:
+    add i_code, 1
+    add i_loop, 1
+    cpr i_loop, i_iterations
+    jpf generation
+    set i_code, i_reset
+    set i_loop, i_reset
+    jmp main
+2zeros:
+    prt "00"
+    prt i_code
+    prt "\n"
+    jmp suite
+1zero:
+    prt "0"
+    prt i_code
+    prt "\n"
+    jmp suite
+
+ext ;securite

@@ -9,9 +9,13 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
+#include <map>
 
 /*WARNING! ce code doit etre compile en static sinon y aura des crashs silencieux
     a cause d'un mauvais linkage*/
+
+struct Variable;
+using Map = std::map<std::string, Variable*>;
 
 enum OpCode {
     CRT = 1,
@@ -42,14 +46,16 @@ enum OpCode {
     LOD,
     RET,
     SLP,
-    TME
+    TME,
+    GPU_E
 };
 
 struct Variable {
-    uint8_t type; //1=int, 2=string, 3=float, 4=bool
+    uint8_t type; //1=int, 2=string, 3=float, 4=bool, 5=map
     int i = 0;
     float f = 0.0f;
     std::string s;
+    Map map;
 };
 
 struct Operand {
@@ -225,9 +231,7 @@ void VM::exec(uint8_t op) {
             }
             if (debug_mode) std::cout << "[DEBUG] SET var " << (int)dst << " = var " << (int)src << std::endl;
             break;
-        }
-
-        case ADD: {
+        } case ADD: {
             Operand a = readOperand();
             Operand b = readOperand();
 
@@ -586,6 +590,12 @@ void VM::exec(uint8_t op) {
             if (debug_mode) std::cout << "[DEBUG] EXT: exiting program" << std::endl;
             break;
 
+        } case GPU_E: {
+            std::cerr << "GPU n'est utilisable qua dans l'emulateur" << std::endl;
+            pc++;
+            if (!debug_mode) running = false;
+            else std::cout << "[DEBUG] GPU: affichage" << std::endl;
+            break;
         } default: {
             std::cerr << "Opcode inconnu: " << (int)op << std::endl;
             running = false;
@@ -619,4 +629,5 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-//magnus carlsen 2024-06
+//magnus carlasen 2024-06 for ГПСД, XS проект
+//v5

@@ -43,12 +43,19 @@ enum OpCode {
     LOD,
     RET,
     SLP,
-    TME
+    TME,
+    GPU_E
 };
 
 struct Fixup {
     std::string label;
     size_t position;
+};
+
+struct Map {
+    uint16_t width;
+    uint16_t height;
+    std::vector<uint8_t> pixels;
 };
 
 //=======UTILS=======
@@ -146,7 +153,9 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, int> intVars;
     std::unordered_map<std::string, float> floatVars;
     std::unordered_map<std::string, std::string> strVars;
+    std::unordered_map<std::string, Map> mapVars;
     std::vector<std::string> stringOrder;
+    std::vector<std::string> mapOrder;
 
     bool inData = false, inCode = false;
 
@@ -231,8 +240,35 @@ int main(int argc, char** argv) {
             } else if (name.rfind("b_", 0) == 0) {
                 varType[name] = 4; //bool
                 intVars[name] = std::stoi(val) != 0;
+            } else if (name.rfind("m_", 0) == 0) {
+                mapOrder.push_back(name);
+                varType[name] = 5; //map
+                size_t first = line.find('{');
+                size_t last = line.find_last_of('}');
+                std::string content = "";
+                if (first != std::string::npos && last != std::string::npos && last > first)
+                    content = line.substr(first + 1, last - first - 1);
+                std::istringstream mapStream(content);
+                std::string widthStr, heightStr, pixelsStr;
+                std::getline(mapStream, widthStr, ',');
+                std::getline(mapStream, heightStr, ',');
+                std::getline(mapStream, pixelsStr);
+                Map map;
+                mapVars[name] = map;
+                map.width = (uint16_t)std::stoi(trim(widthStr), nullptr, 0);
+                map.height = (uint16_t)std::stoi(trim(heightStr), nullptr, 0);
+                std::istringstream pixelsStream(pixelsStr);
+                std::string pixel;
+                while (std::getline(pixelsStream, pixel, ','))
+                    map.pixels.push_back((uint8_t)std::stoi(trim(pixel), nullptr, 0));
+                mapVars[name] = map;
+                if (map.pixels.size() != map.width * map.height) {
+                    std::cerr << "Erreur: taille de map invalide pour " << name << std::endl;
+                    exit(1);
+                }
+
             } else {
-                std::cerr << "Erreur: type inconnu pour variable '" << name << "' (utiliser i_, f_, s_, b_)" << std::endl;
+                std::cerr << "Erreur: type inconnu pour variable '" << name << "' (utiliser i_, f_, s_, b_, m_)" << std::endl;
                 exit(1);
             }
 
@@ -357,6 +393,19 @@ int main(int argc, char** argv) {
             continue;
         }
 
+        if (cmd == "gpu") {
+            std::string arg;
+            iss >> arg;
+            code.push_back(GPU_E);
+            if (arg == "pixel") code.push_back(0);
+            else if (arg == "rect") code.push_back(1);
+            else if (arg == "voidrect") code.push_back(2);
+            else if (arg == "circle") code.push_back(3);
+            else if (arg == "voidcircle") code.push_back(4);
+            else if (arg == "drawmap") code.push_back(5);
+            continue;
+        }
+
         //4. instructions a deux arguments (ADD, SUB, CPR, etc.)
         if (cmd == "set") {
             std::string a, b;
@@ -399,7 +448,7 @@ int main(int argc, char** argv) {
     //=====ECRITURE DU BINAIRE=====
 
     out.write("CASM", 4);
-    uint8_t ver = 3;
+    uint8_t ver = 4;
     out.write((char*)&ver, 1);
     uint16_t entry = labels.count("main") ? labels["main"] : 0;
     out.write((char*)&entry, 2);
@@ -407,21 +456,29 @@ int main(int argc, char** argv) {
     uint16_t vc = varOrder.size();
     out.write((char*)&vc, 2);
     uint16_t strIndexVar = 0;
+    uint16_t mapIndexVar = 0;
+
     for (auto& v : varOrder) {
         out.put(varType[v]);
         out.put(0);
         if (varType[v] == 1) out.write((char*)&intVars[v], 4);
         else if (varType[v] == 3) out.write((char*)&floatVars[v], 4);
-        else {
+        else if (varType[v] == 2) {
+            uint32_t idx = strIndexVar++;
+            out.write((char*)&idx, 4);
+        } else if (varType[v] == 5) {
+            uint32_t idx = mapIndexVar++;
+            out.write((char*)&idx, 4);
+        } else {
             auto it = std::find(stringOrder.begin(), stringOrder.end(), v);
             uint32_t idx = std::distance(stringOrder.begin(), it);
             out.write((char*)&idx, 4);
         }
     }
 
+    //chargement des strings litterales
     uint16_t sc = stringOrder.size();
     out.write((char*)&sc, 2);
-
     for (auto& name : stringOrder) {
         auto& s = strVars[name];
         uint16_t l = s.size();
@@ -429,9 +486,17 @@ int main(int argc, char** argv) {
         out.write(s.c_str(), l);
     }
 
-    //uint16_t fc = 0; out.write((char*)&fc, 2);
-    //uint16_t res = 0; out.write((char*)&res, 2);
+    //chargement des maps
+    uint16_t mc = mapOrder.size();
+    out.write((char*)&mc, 2);
+    for(auto& name : mapOrder) {
+        Map& m = mapVars[name];
+        out.write((char*)&m.width, 2);
+        out.write((char*)&m.height, 2);
+        out.write((char*)m.pixels.data(), m.pixels.size());
+    }
 
+    //chargement du code
     for (auto& f : fixups) {
         if (labels.find(f.label) == labels.end()) {
             std::cerr << "Erreur: Label '" << f.label << "' non trouve!" << std::endl;
@@ -449,4 +514,5 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-//magnus carlsen 2024-06
+//magnus carlasen 2024-06 for ГПСД, XS проект
+//v4

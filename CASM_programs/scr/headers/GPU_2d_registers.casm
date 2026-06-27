@@ -1,0 +1,38 @@
+;CASM header for emulator's GPU
+section.data
+crt i_GPU_x, 0     ;x position of the cursor
+crt i_GPU_y, 0     ;y position of the cursor
+crt i_GPU_w, 0     ;width of the form to draw
+crt i_GPU_h, 0     ;height of the form to draw
+crt i_GPU_t, 0     ;thickness of the form to draw (if the form is void)
+crt i_GPU_color, 0 ;color of the form to draw
+crt i_GPU_r, 0     ;radius of the circle (only if the form is a circle)
+
+;possible colors
+crt i_CPU_LIGHTGRAY, 0
+crt i_CPU_GRAY, 1
+crt i_CPU_DARKGRAY, 2
+crt i_CPU_YELLOW, 3
+crt i_CPU_GOLD, 4
+crt i_CPU_ORANGE, 5
+crt i_CPU_PINK, 6
+crt i_CPU_RED, 7
+crt i_CPU_MAROON, 8
+crt i_CPU_GREEN, 9
+crt i_CPU_LIME, 10
+crt i_CPU_DARKGREEN, 11
+crt i_CPU_SKYBLUE, 12
+crt i_CPU_BLUE, 13
+crt i_CPU_DARKBLUE, 14
+crt i_CPU_PURPLE, 15
+crt i_CPU_VIOLET, 16
+crt i_CPU_DARKPURPLE, 17
+crt i_CPU_BEIGE, 18
+crt i_CPU_BROWN, 19
+crt i_CPU_DARKBROWN, 20
+crt i_CPU_WHITE, 21
+crt i_CPU_BLACK, 22
+crt i_CPU_MAGENTA, 23
+crt i_CPU_RAYWHITE, 24
+
+;end of the header
