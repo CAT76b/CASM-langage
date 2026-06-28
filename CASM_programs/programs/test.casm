@@ -1,0 +1,13 @@
+header "GPU_2d_registers.casm"
+
+section.code
+main:
+    set i_GPU_x, 20
+    set i_GPU_y, 10
+    set i_GPU_w, 30
+    set i_GPU_h, 45
+    set i_GPU_color, i_GPU_RED
+    gpu rect
+    jmp main
+
+ext ;securite

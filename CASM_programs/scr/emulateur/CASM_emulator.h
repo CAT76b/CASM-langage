@@ -87,21 +87,23 @@ public:
     }
 
     Operand readOperand() {
-        if (loader.pc >= loader.code.size()) {
-            Operand empty{};
-            empty.isConst = false;
-            empty.var = 0;
-            return empty;
+        Operand op{};
+        uint8_t b = r8();
+
+        if (b == 0xFF) {
+            op.isConst = true;
+            op.isFloat = false;
+            op.i = r32();
+        } else if (b == 0xFE) {
+            op.isConst = true;
+            op.isFloat = true;
+            op.f = rFloat();
+        } else {
+            op.isConst = false;
+            op.var = b;
         }
 
-        uint8_t operand = loader.code[loader.pc++];
-        bool isConst = (operand & 0x80) != 0;
-        uint8_t varIndex = operand & 0x7F;
-
-        Operand result{};
-        result.isConst = isConst;
-        result.var = varIndex;
-        return result;
+        return op;
     }
 
     //lit un entier 8 bits (1 octet) a partir du code charge
@@ -116,6 +118,25 @@ public:
         uint16_t value = (loader.code[loader.pc] << 8) | loader.code[loader.pc + 1];
         loader.pc += 2;
         return value;
+    }
+
+    int32_t r32() {
+        int32_t v = 0;
+        v |= loader.code[loader.pc++];
+        v |= loader.code[loader.pc++] << 8;
+        v |= loader.code[loader.pc++] << 16;
+        v |= loader.code[loader.pc++] << 24;
+        return v;
+    }
+
+    float rFloat() {
+        float v;
+        uint8_t* p = (uint8_t*)&v;
+        p[0] = loader.code[loader.pc++];
+        p[1] = loader.code[loader.pc++];
+        p[2] = loader.code[loader.pc++];
+        p[3] = loader.code[loader.pc++];
+        return v;
     }
 
     //lecture des registres GPU a partir des variables
@@ -134,28 +155,23 @@ public:
         uint8_t opcode = loader.code[loader.pc++];
         switch(opcode) {
             case SET: {
-                uint8_t dst = loader.code[loader.pc++]; //destination
-                uint8_t src = loader.code[loader.pc++]; //source
+                uint8_t dst = r8();
+                uint8_t src = r8();
 
-                vars[dst].type = vars[src].type;
-                switch (vars[src].type) {
-                    case 1: { //int
-                        maj_GPU_registers(src);
-                        vars[dst].i = vars[src].i;
-                        break;
-                    } case 3: { //float
-                        vars[dst].f = vars[src].f;
-                        break;
-                    } case 2: { //string
-                        vars[dst].i = vars[src].i;
-                        break;
-                    } case 4: { //bool
-                        vars[dst].i = vars[src].i;
-                        break;
-                    } case 5: { //map
+                if (src == 0xFF) {
+                    vars[dst].type = 1;
+                    vars[dst].i = r32();
+                    maj_GPU_registers(dst);
+                } else if (src == 0xFE) {
+                    vars[dst].type = 3;
+                    vars[dst].f = rFloat();
+                } else {
+                    vars[dst] = vars[src];
+
+                    if(vars[src].type == 1) maj_GPU_registers(dst);
+                    if(vars[src].type == 5) {
                         std::cerr << "Erreur: impossible de modifier un tableau" << std::endl;
                         running = false;
-                        break;
                     }
                 }
                 break;
@@ -447,6 +463,7 @@ public:
                 }
             } default: {
                 std::cerr << "Unknown opcode: " << (int)opcode << std::endl;
+                running = false;
                 break;
             }
         }

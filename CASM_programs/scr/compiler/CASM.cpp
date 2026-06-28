@@ -414,8 +414,9 @@ int main(int argc, char** argv) {
             b = stripComma(b);
 
             code.push_back(SET);
-            code.push_back(varIndex(a));
-            code.push_back(varIndex(b));
+            code.push_back(varIndex(a)); //destination
+            bool hasVar = false;
+            encodeOperand(b, hasVar);
             continue;
         }
 

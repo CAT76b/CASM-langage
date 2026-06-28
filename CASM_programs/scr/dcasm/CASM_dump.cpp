@@ -115,7 +115,27 @@ int main(int argc, char** argv) {
         offset += len;
     }
 
-    //6. affichage du code (brut)
+    //6. affichage des maps
+    uint16_t mapCount = data[offset] | (data[offset + 1] << 8);
+    offset += 2;
+
+    std::cout << "\n===Maps (" << mapCount << ")===\n";
+
+    for (uint16_t i = 0; i < mapCount; i++) {
+        uint16_t width  = data[offset] | (data[offset + 1] << 8);
+        offset += 2;
+        uint16_t height = data[offset] | (data[offset + 1] << 8);
+        offset += 2;
+
+        std::cout << "Map " << i << " (" << width << "x" << height << ")\n";
+        size_t size = width * height;
+        for (size_t j = 0; j < size; j++) std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[offset + j] << " ";
+
+        std::cout << "\n";
+        offset += size;
+    }
+
+    //7. affichage du code (brut)
     std::cout << "\n===Code===\n";
     std::cout << "Offset | Hex       | Binaire (par octet)\n";
     std::cout << "========================================\n";
@@ -128,5 +148,5 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-//magnus carlsen 2024-06
-//2
+//magnus carlsen 2024-06, for ГПСД, XS проект
+//3

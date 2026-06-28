@@ -123,18 +123,21 @@ float VM::rFloat() {
 }
 
 Operand VM::readOperand() {
-    Operand o;
-    uint8_t m = r8();
-
-    if (m == 0xFF) {
-        o.isConst = true;
-        o.i = r32();
-    } else if (m == 0xFE) {
-        o.isConst = true;
-        o.isFloat = true;
-        o.f = rFloat();
-    } else o.var = m;
-    return o;
+    Operand op{};
+    uint8_t b = r8();
+    if (b == 0xFF) {
+        op.isConst = true;
+        op.isFloat = false;
+        op.i = r32();
+    } else if (b == 0xFE) {
+        op.isConst = true;
+        op.isFloat = true;
+        op.f = rFloat();
+    } else {
+        op.isConst = false;
+        op.var = b;
+    }
+    return op;
 }
 
 bool VM::load(const std::string& filename) {
@@ -210,26 +213,22 @@ void VM::exec(uint8_t op) {
             else std::cout << "[INVALID_STR]";
             break;
         } case SET: {
-            uint8_t dst = code[pc++]; //destination
-            uint8_t src = code[pc++]; //source
+            uint8_t dst = r8(); //destination
+            uint8_t src = r8(); //source
 
-            //copie la valeur selon le type
-            vars[dst].type = vars[src].type;
-            switch (vars[src].type) {
-                case 1: //int
-                    vars[dst].i = vars[src].i;
-                    break;
-                case 3: //float
-                    vars[dst].f = vars[src].f;
-                    break;
-                case 2: //string
-                    vars[dst].i = vars[src].i;
-                    break;
-                case 4: //bool
-                    vars[dst].i = vars[src].i;
-                    break;
+            if (src == 0xFF) {
+                vars[dst].type = 1;
+                vars[dst].i = r32();
+            } else if (src == 0xFE) {
+                vars[dst].type = 3;
+                vars[dst].f = rFloat();
+            } else vars[dst] = vars[src];
+
+            if(debug_mode) {
+                if(src == 0xFF) std::cout << "[DEBUG] SET var " << (int)dst << " = <int immediat>\n";
+                else if(src == 0xFE) std::cout << "[DEBUG] SET var " << (int)dst << " = <float immediat>\n";
+                else std::cout << "[DEBUG] SET var " << (int)dst << " = var " << (int)src << '\n';
             }
-            if (debug_mode) std::cout << "[DEBUG] SET var " << (int)dst << " = var " << (int)src << std::endl;
             break;
         } case ADD: {
             Operand a = readOperand();

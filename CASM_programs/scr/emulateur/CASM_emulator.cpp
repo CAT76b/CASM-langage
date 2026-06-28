@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     CPU cpu;
     if (argc > 2) {
         std::string filename = argv[2];
-        if (!cpu.load(filename)) {
+        if (!cpu.load(filename)) { //chargement du programme CASM
             std::cerr << "Erreur chargement CASM" << std::endl;
             return 1;
         }
@@ -24,13 +24,13 @@ int main(int argc, char* argv[]) {
     SetTargetFPS(60);
 
     while (!WindowShouldClose() && cpu.running) {
-        cpu.load(argv[2]);
-        cpu.exe_instruction();
+        for (int i = 0; i < 1000 && cpu.running; i++) cpu.exe_instruction();
         BeginDrawing();
         ClearBackground(BLACK);
         cpu.gpu.draw(scale);
         EndDrawing();
     }
+    CloseWindow();
 }
 
 //magnus carlasen 2024-06 for ГПСД, XS проект
