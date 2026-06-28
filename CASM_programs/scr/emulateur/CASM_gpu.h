@@ -104,11 +104,12 @@ public:
         MAGENTA,
         RAYWHITE
     };
-    void drawmap(int x, int y, int w, int h, uint8_t* map) {
+    void drawmap(int x, int y, int w, int h, int scale, uint8_t* map) {
+        if (map == nullptr) return;
         for (int j = 0; j < h; j++) {
             for (int i = 0; i < w; i++) {
                 uint8_t colorIndex = map[j * w + i];
-                pixel(x + i, y + j, palette[colorIndex]);
+                rect(x + (x * scale), y + (y * scale), scale, scale, palette[colorIndex]);
             }
         }
     }

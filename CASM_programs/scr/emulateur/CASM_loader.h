@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <cstring>
 
 struct Variable {
     uint8_t type = 0;
@@ -45,9 +46,25 @@ public:
         file.read((char*)&varCount, 2);
         vars.assign(varCount, Variable());
         for (int i = 0; i < varCount; ++i) {
-            file.read((char*)&vars[i].type, 1);
-            file.ignore(1); 
-            file.read((char*)&vars[i].index, 4);
+            uint8_t type = 0;
+            uint8_t reserved = 0;
+            uint32_t rawValue = 0;
+            file.read((char*)&type, 1);
+            file.read((char*)&reserved, 1);
+            file.read((char*)&rawValue, 4);
+
+            vars[i].type = type;
+            switch (type) {
+                case 1:
+                    vars[i].i = static_cast<int32_t>(rawValue);
+                    break;
+                case 3:
+                    std::memcpy(&vars[i].f, &rawValue, sizeof(rawValue));
+                    break;
+                default:
+                    vars[i].index = rawValue;
+                    break;
+            }
         }
 
         //2. chaines

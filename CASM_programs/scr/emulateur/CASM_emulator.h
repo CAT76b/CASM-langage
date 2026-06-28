@@ -66,6 +66,7 @@ struct GPU_registers {
     int color;
     int r;
     uint8_t* map;
+    int s;
 };
 GPU_registers GPU_reg;
 
@@ -80,10 +81,36 @@ public:
     std::vector<uint16_t> callStack;
     bool running = true;
     bool flag = false;
+    uint64_t sleep_until = 0;
+    bool is_sleeping = false;
 
     bool load(const std::string& file) {
         running = true;
-        return loader.load(file);
+        if (!loader.load(file)) return false;
+
+        vars.clear();
+        vars.resize(loader.vars.size());
+        for (size_t i = 0; i < loader.vars.size(); ++i) {
+            const Variable& lv = loader.vars[i];
+            Var v{};
+            v.type = lv.type;
+            switch (lv.type) {
+                case 1: {
+                    v.i = lv.i;
+                    break;
+                } case 3: {
+                    v.f = lv.f;
+                    break;
+                } default: {
+                    v.i = static_cast<int32_t>(lv.index);
+                    break;
+                }
+            }
+            vars[i] = v;
+        }
+
+        strings = loader.strings;
+        return true;
     }
 
     Operand readOperand() {
@@ -140,23 +167,35 @@ public:
     }
 
     //lecture des registres GPU a partir des variables
-    void maj_GPU_registers(uint16_t var) {
-        if (vars[var].name == "i_GPU_x") GPU_reg.x = vars[var].i;
-        else if (vars[var].name == "i_GPU_y") GPU_reg.y = vars[var].i;
-        else if (vars[var].name == "i_GPU_w") GPU_reg.w = vars[var].i;
-        else if (vars[var].name == "i_GPU_h") GPU_reg.h = vars[var].i;
-        else if (vars[var].name == "i_GPU_t") GPU_reg.t = vars[var].i;
-        else if (vars[var].name == "i_GPU_color") GPU_reg.color = vars[var].i;
-        else if (vars[var].name == "i_GPU_r") GPU_reg.r = vars[var].i;
-        else return;
+    void maj_GPU_registers(uint8_t var) {
+        switch (var) {
+            case 0: GPU_reg.x = vars[var].i; break;
+            case 1: GPU_reg.y = vars[var].i; break;
+            case 2: GPU_reg.w = vars[var].i; break;
+            case 3: GPU_reg.h = vars[var].i; break;
+            case 4: GPU_reg.t = vars[var].i; break;
+            case 5: GPU_reg.color = vars[var].i; break;
+            case 6: GPU_reg.r = vars[var].i; break;
+            case 7: GPU_reg.s = vars[var].i; break;
+        }
     }
 
     void exe_instruction() {
+        if (loader.pc >= loader.code.size()) {
+            std::cerr << "Erreur: PC hors limites (" << loader.pc << " >= " << loader.code.size() << ")" << std::endl;
+            running = false;
+            return;
+        }
         uint8_t opcode = loader.code[loader.pc++];
-        switch(opcode) {
+        switch (opcode) {
             case SET: {
                 uint8_t dst = r8();
                 uint8_t src = r8();
+                if (dst >= vars.size()) {
+                    std::cerr << "Erreur: index de variable invalide: " << dst << std::endl;
+                    running = false;
+                    break;
+                }
 
                 if (src == 0xFF) {
                     vars[dst].type = 1;
@@ -262,6 +301,7 @@ public:
                         break;
                     }
                 }
+                break;
             } case SQR: {
                 Operand o = readOperand();
                 if (vars[o.var].type == 3) vars[o.var].f = std::sqrt(vars[o.var].f);
@@ -316,10 +356,12 @@ public:
                         break;
                     } case NND: {
                         flag = !(v1 && v2);
+                        break;
                     } case NOR: {
                         flag = !(v1 || v2);
                         break;
                     }
+                    break;
                 }
             } case LIF: {
                 Operand o = readOperand();
@@ -425,7 +467,11 @@ public:
             } case SLP: {
                 Operand o = readOperand();
                 int ms = o.isConst ? o.i : (vars[o.var].type == 3 ? (int)vars[o.var].f : vars[o.var].i);
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+
+                //active slp pendant le temps specifie
+                sleep_until = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count() + ms;
+                is_sleeping = true;
                 break;
             } case TME: {
                 uint8_t dst = r8();
@@ -440,27 +486,40 @@ public:
                 break;
             } case GPU_E: {
                 uint8_t action = r8();
-                switch(action) {
-                    case 0: {
-                        gpu.pixel(GPU_reg.x, GPU_reg.y, gpu.palette[GPU_reg.color]);
-                        break;
-                    } case 1: {
-                        gpu.rect(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, gpu.palette[GPU_reg.color]);
-                        break;
-                    } case 2: {
-                        gpu.voidrect(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, GPU_reg.t, gpu.palette[GPU_reg.color]);
-                        break;
-                    } case 3: {
-                        gpu.circle(GPU_reg.x, GPU_reg.y, GPU_reg.r, gpu.palette[GPU_reg.color]);
-                        break;
-                    } case 4: {
-                        gpu.voidcircle(GPU_reg.x, GPU_reg.y, GPU_reg.r, GPU_reg.t, gpu.palette[GPU_reg.color]);
-                        break;
-                    } case 5: {
-                        gpu.drawmap(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, GPU_reg.map);
-                        break;
+                if (GPU_reg.color >= 0 && GPU_reg.color < 25) {
+                    switch(action) {
+                        case 0: {
+                            gpu.pixel(GPU_reg.x, GPU_reg.y, gpu.palette[GPU_reg.color]);
+                            break;
+                        } case 1: {
+                            gpu.rect(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, gpu.palette[GPU_reg.color]);
+                            break;
+                        } case 2: {
+                            gpu.voidrect(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, GPU_reg.t, gpu.palette[GPU_reg.color]);
+                            break;
+                        } case 3: {
+                            gpu.circle(GPU_reg.x, GPU_reg.y, GPU_reg.r, gpu.palette[GPU_reg.color]);
+                            break;
+                        } case 4: {
+                            gpu.voidcircle(GPU_reg.x, GPU_reg.y, GPU_reg.r, GPU_reg.t, gpu.palette[GPU_reg.color]);
+                            break;
+                        } case 5: {
+                            int scale;
+                            if (GPU_reg.s <= 1) scale = 1;
+                            else scale = GPU_reg.s;
+                            gpu.drawmap(GPU_reg.x, GPU_reg.y, GPU_reg.w, GPU_reg.h, scale, GPU_reg.map);
+                            break;
+                        } default: {
+                            std::cerr << "Erreur: action GPU inconnue: " << action << std::endl;
+                            running = false;
+                            break;
+                        }
                     }
+                } else {
+                    std::cerr << "Erreur: couleur GPU invalide: " << GPU_reg.color << std::endl;
+                    running = false;
                 }
+                break;
             } default: {
                 std::cerr << "Unknown opcode: " << (int)opcode << std::endl;
                 running = false;

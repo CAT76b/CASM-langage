@@ -36,3 +36,4 @@ crt i_CPU_MAGENTA, 23
 crt i_CPU_RAYWHITE, 24
 
 ;end of the header
+section.code

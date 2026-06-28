@@ -189,12 +189,30 @@ int main(int argc, char** argv) {
         line = trim(line);
         if (line.empty() || line[0] == ';') continue;
 
+        //supprime les commentaires
+        size_t inline_comment = line.find(';');
+        if (inline_comment != std::string::npos) line = trim(line.substr(0, inline_comment));
+
+        //===GESTION MULTI-LIGNES POUR LES MAPS===
+        //si la ligne contient '{' mais pas encore '}' on agglomere les lignes suivantes
+        if (line.find('{') != std::string::npos && line.find('}') == std::string::npos) {
+            std::string next_line;
+            while (line.find('}') == std::string::npos && std::getline(in, next_line)) {
+                //nettoyage des commentaires dans les lignes intérieures de la map
+                size_t next_comment = next_line.find(';');
+                if (next_comment != std::string::npos) next_line = next_line.substr(0, next_comment);
+                
+                next_line = trim(next_line);
+                if (!next_line.empty()) line += " " + next_line; // Fusionne les lignes avec un espace
+            }
+        }
+        //=======================================
+
         std::istringstream iss(line);
         std::string cmd, file;
         iss >> cmd;
         if (cmd == "header") {
             iss >> file;
-            //retirer les guillemets si presents
             file.erase(std::remove(file.begin(), file.end(), '"'), file.end());
             include_header(file);
             continue;
@@ -516,4 +534,4 @@ int main(int argc, char** argv) {
 }
 
 //magnus carlasen 2024-06 for ГПСД, XS проект
-//v4
+//v5
