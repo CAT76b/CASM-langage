@@ -20,4 +20,5 @@ A custom programming language inspired by assembly, with a compiler and virtual 
 - WARNING! To use commands, you should have configured your computer's path.
 
 ## STATUT
-All parts of the projet (the compiler, the dump, the virtual machine and the emulator) work.
+- All parts of the projet (the compiler, the dump, the virtual machine and the emulator) work.
+- The VM isn't actualised
