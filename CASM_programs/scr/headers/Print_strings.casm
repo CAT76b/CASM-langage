@@ -1,0 +1,236 @@
+;================================
+;Print_strings.casm
+;function print string for handicaped people (void function)
+;================================
+
+section.data
+crt i_scale, 0
+crt s_msg, ""
+crt i_current_char, 0
+crt i_char, 0
+crt i_decalage, 8
+
+section.code
+print_string:
+    ;chargement des parametres dans les variables locales
+    lod i_scale
+    lod s_msg
+
+    ;chargement des registres gpu
+    set i_GPU_s, i_scale
+    set i_GPU_w, #8
+    set i_GPU_h, #8
+
+    set i_current_char, #0  ;reinitialisation du compteur de caractere
+    set i_decalage, #8      ;reinitialisation du decalage entre les caracteres
+    mul i_decalage, i_scale ;scaling du decalage entre les caracteres
+
+    ;boucle d'affichage des caracteres
+    loop:
+        ;chargement du caractere
+        gtc i_char, s_msg, i_current_char
+        cpr s_char, #0
+        jpf affichage
+        ret
+
+    affichage:
+        add i_current_char, #1
+
+        ;determination du caractere
+        cpr i_char, #32
+        jpt incrementation
+        cpr i_char, #97
+        jpt affichage_a
+        cpr i_char, #98
+        jpt affichage_b
+        cpr i_char, #99
+        jpt affichage_c
+        cpr i_char, #100
+        jpt affichage_d
+        cpr i_char, #101
+        jpt affichage_e
+        cpr i_char, #102
+        jpt affichage_f
+        cpr i_char, #103
+        jpt affichage_g
+        cpr i_char, #104
+        jpt affichage_h
+        cpr i_char, #105
+        jpt affichage_i
+        cpr i_char, #106
+        jpt affichage_j
+        cpr i_char, #107
+        jpt affichage_k
+        cpr i_char, #108
+        jpt affichage_l
+        cpr i_char, #109
+        jpt affichage_m
+        cpr i_char, #110
+        jpt affichage_n
+        cpr i_char, #111
+        jpt affichage_o
+        cpr i_char, #112
+        jpt affichage_p
+        cpr i_char, #113
+        jpt affichage_q
+        cpr i_char, #114
+        jpt affichage_r
+        cpr i_char, #115
+        jpt affichage_s
+        cpr i_char, #116
+        jpt affichage_t
+        cpr i_char, #117
+        jpt affichage_u
+        cpr i_char, #118
+        jpt affichage_v
+        cpr i_char, #119
+        jpt affichage_w
+        cpr i_char, #120
+        jpt affichage_x
+        cpr i_char, #121
+        jpt affichage_y
+        cpr i_char, #122
+        jpt affichage_z
+        cpr i_char, #44
+        jpt affichage_virgule
+        cpr i_char, #46
+        jpt affichage_point
+        cpr i_char, #48
+        jpt affichage_0
+        cpr i_char, #49
+        jpt affichage_1
+        cpr i_char, #50
+        jpt affichage_2
+        cpr i_char, #51
+        jpt affichage_3
+        cpr i_char, #52
+        jpt affichage_4
+        cpr i_char, #53
+        jpt affichage_5
+        cpr i_char, #54
+        jpt affichage_6
+        cpr i_char, #55
+        jpt affichage_7
+        cpr i_char, #56
+        jpt affichage_8
+        cpr i_char, #57
+        jpt affichage_9
+
+    affichage_a:
+        set i_GPU_map, m_a
+        jmp incrementation
+    affichage_b:
+        set i_GPU_map, m_b
+        jmp incrementation
+    affichage_c:
+        set i_GPU_map, m_c
+        jmp incrementation
+    affichage_d:
+        set i_GPU_map, m_d
+        jmp incrementation
+    affichage_e:
+        set i_GPU_map, m_e
+        jmp incrementation
+    affichage_f:
+        set i_GPU_map, m_f
+        jmp incrementation
+    affichage_g:
+        set i_GPU_map, m_g
+        jmp incrementation
+    affichage_h:
+        set i_GPU_map, m_h
+        jmp incrementation
+    affichage_i:
+        set i_GPU_map, m_i
+        jmp incrementation
+    affichage_j:
+        set i_GPU_map, m_j
+        jmp incrementation
+    affichage_k:
+        set i_GPU_map, m_k
+        jmp incrementation
+    affichage_l:
+        set i_GPU_map, m_l
+        jmp incrementation
+    affichage_m:
+        set i_GPU_map, m_m
+        jmp incrementation
+    affichage_n:
+        set i_GPU_map, m_n
+        jmp incrementation
+    affichage_o:
+        set i_GPU_map, m_o
+        jmp incrementation
+    affichage_p:
+        set i_GPU_map, m_p
+        jmp incrementation
+    affichage_q:
+        set i_GPU_map, m_q
+        jmp incrementation
+    affichage_r:
+        set i_GPU_map, m_r
+        jmp incrementation
+    affichage_s:
+        set i_GPU_map, m_s
+        jmp incrementation
+    affichage_t:
+        set i_GPU_map, m_t
+        jmp incrementation
+    affichage_u:
+        set i_GPU_map, m_u
+        jmp incrementation
+    affichage_v:
+        set i_GPU_map, m_v
+        jmp incrementation
+    affichage_w:
+        set i_GPU_map, m_w
+        jmp incrementation
+    affichage_x:
+        set i_GPU_map, m_x
+        jmp incrementation
+    affichage_y:
+        set i_GPU_map, m_y
+        jmp incrementation
+    affichage_z:
+        set i_GPU_map, m_z
+        jmp incrementation
+    affichage_virgule:
+        set i_GPU_map, m_virgule
+        jmp incrementation
+    affichage_point:
+        set i_GPU_map, m_point
+        jmp incrementation
+    affichage_0:
+        set i_GPU_map, m_n0
+        jmp incrementation
+    affichage_1:
+        set i_GPU_map, m_n1
+        jmp incrementation
+    affichage_2:
+        set i_GPU_map, m_n2
+        jmp incrementation
+    affichage_3:
+        set i_GPU_map, m_n3
+        jmp incrementation
+    affichage_4:
+        set i_GPU_map, m_n4
+        jmp incrementation
+    affichage_5:
+        set i_GPU_map, m_n5
+        jmp incrementation
+    affichage_6:
+        set i_GPU_map, m_n6
+        jmp incrementation
+    affichage_7:
+        set i_GPU_map, m_n7
+        jmp incrementation
+    affichage_8:
+        set i_GPU_map, m_n8
+        jmp incrementation
+    affichage_9:
+        set i_GPU_map, m_n9
+    
+    incrementation:
+        gpu drawmap
+        add i_GPU_x, i_decalage
+        jmp loop

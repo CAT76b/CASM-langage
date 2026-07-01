@@ -1,5 +1,9 @@
+;========================================
+;GPU_2d_registers.casm
 ;CASM header for emulator's GPU
-section.data
+;a inclure obligatoirement TOUJOURS en premier !
+;========================================
+
 crt i_GPU_x, 0     ;x position of the cursor
 crt i_GPU_y, 0     ;y position of the cursor
 crt i_GPU_w, 0     ;width of the form to draw
@@ -7,6 +11,8 @@ crt i_GPU_h, 0     ;height of the form to draw
 crt i_GPU_t, 0     ;thickness of the form to draw (if the form is void)
 crt i_GPU_color, 0 ;color of the form to draw
 crt i_GPU_r, 0     ;radius of the circle (only if the form is a circle)
+crt i_GPU_s, 0     ;scale of the map (only for draw a map)
+crt i_GPU_map, 0   ;index of the map
 
 ;possible colors
 crt i_CPU_LIGHTGRAY, 0
@@ -34,6 +40,6 @@ crt i_CPU_WHITE, 21
 crt i_CPU_BLACK, 22
 crt i_CPU_MAGENTA, 23
 crt i_CPU_RAYWHITE, 24
+crt i_CPU_BLANK, 25
 
 ;end of the header
-section.code

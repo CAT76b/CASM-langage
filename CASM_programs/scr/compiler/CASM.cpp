@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 std::unordered_set<std::string> included_headers;
 std::vector<std::string> source_lines;
@@ -44,7 +45,9 @@ enum OpCode {
     RET,
     SLP,
     TME,
-    GPU_E
+    GPU_E,
+    IPF,
+    GTC
 };
 
 struct Fixup {
@@ -104,29 +107,86 @@ std::string parse_escape_sequences(const std::string& s) {
     return result;
 }
 
-void include_header(const std::string& name) {
+std::filesystem::path find_headers_dir(const std::filesystem::path& input_path, const std::filesystem::path& executable_path) {
+    std::vector<std::filesystem::path> candidates;
+
+    auto add_candidate = [&](const std::filesystem::path& p) {
+        if (!p.empty()) candidates.push_back(p);
+    };
+
+    add_candidate(std::filesystem::current_path() / "scr" / "headers");
+
+    if (!input_path.empty()) {
+        std::filesystem::path current = input_path.has_parent_path() ? input_path.parent_path() : std::filesystem::current_path();
+        while (true) {
+            add_candidate(current / "scr" / "headers");
+            add_candidate(current / "headers");
+            if (current == current.parent_path()) break;
+            current = current.parent_path();
+        }
+    }
+
+    if (!executable_path.empty()) {
+        std::filesystem::path exe_dir = executable_path.has_parent_path() ? executable_path.parent_path() : std::filesystem::current_path();
+        add_candidate(exe_dir / ".." / "headers");
+        add_candidate(exe_dir / ".." / "scr" / "headers");
+    }
+
+    for (const auto& candidate : candidates) {
+        if (std::filesystem::exists(candidate) && std::filesystem::is_directory(candidate)) {
+            return candidate.lexically_normal();
+        }
+    }
+
+    return {};
+}
+
+void include_header(const std::string& name, const std::filesystem::path& headers_dir) {
     if (included_headers.count(name)) return;
     included_headers.insert(name);
 
-    //1. lire dependances
-    std::ifstream deps("../scr/headers/" + name + ".deps.txt");
+    std::filesystem::path header_path = std::filesystem::path(name);
+    if (!header_path.is_absolute()) header_path = headers_dir / header_path;
+
+    std::filesystem::path deps_path = header_path;
+    deps_path = deps_path.parent_path() / (deps_path.filename().string() + ".deps.txt");
+    std::ifstream deps(deps_path);
     if (deps) {
         std::string dep;
         while (std::getline(deps, dep)) {
             dep = trim(dep);
-            if (!dep.empty()) include_header(dep);
+            if (!dep.empty()) include_header(dep, headers_dir);
         }
     }
 
-    //2. inclure le header lui-meme
-    std::ifstream file("../scr/headers/" + name);
+    std::ifstream file(header_path);
     if (!file) {
-        std::cerr << "Header non trouve: " << name << std::endl;
+        std::cerr << "Erreur: Header non trouve: " << header_path.string() << std::endl;
         exit(1);
     }
 
     std::string line;
-    while (std::getline(file, line)) source_lines.push_back(line); //ou push dans ton buffer source
+    while (std::getline(file, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == ';') continue;
+
+        //supprime les commentaires de fin de ligne
+        size_t comment_pos = line.find(';');
+        if (comment_pos != std::string::npos) line = trim(line.substr(0, comment_pos));
+        if (line.empty()) continue;
+
+        //gestion multi-lignes pour assembler les accolades { } des maps dans les headers
+        if (line.find('{') != std::string::npos && line.find('}') == std::string::npos) {
+            std::string next_line;
+            while (line.find('}') == std::string::npos && std::getline(file, next_line)) {
+                size_t next_comment = next_line.find(';');
+                if (next_comment != std::string::npos) next_line = next_line.substr(0, next_comment);
+                line += " " + trim(next_line);
+            }
+        }
+
+        source_lines.push_back(line);
+    }
 }
 
 //=======MAIN=======
@@ -137,7 +197,15 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::ifstream in(argv[1]);
+    std::filesystem::path input_path = argv[1];
+    std::filesystem::path executable_path = argc > 0 ? argv[0] : "";
+    std::filesystem::path headers_dir = find_headers_dir(input_path, executable_path);
+    if (headers_dir.empty()) {
+        std::cerr << "Erreur: Repertoire des headers introuvable" << std::endl;
+        return 1;
+    }
+
+    std::ifstream in(input_path);
     if (!in) { std::cerr << "Erreur ouverture source" << std::endl; return 1; }
 
     std::ofstream out(argv[2], std::ios::binary);
@@ -157,18 +225,47 @@ int main(int argc, char** argv) {
     std::vector<std::string> stringOrder;
     std::vector<std::string> mapOrder;
 
-    bool inData = false, inCode = false;
+    bool inData = true, inCode = false;
 
-    auto varIndex = [&](const std::string& v) -> uint8_t {
+    auto ensureVar = [&](const std::string& v) -> uint8_t {
         auto it = std::find(varOrder.begin(), varOrder.end(), v);
-        if (it == varOrder.end()) {
-            std::cerr << "Variable inconnue: " << v << std::endl;
-            exit(1);
+        if (it != varOrder.end()) {
+            return (uint8_t)std::distance(varOrder.begin(), it);
         }
-        return (uint8_t)std::distance(varOrder.begin(), it);
+
+        varOrder.push_back(v);
+        if (v.rfind("f_", 0) == 0) {
+            varType[v] = 3;
+            floatVars[v] = 0.0f;
+        } else if (v.rfind("i_", 0) == 0) {
+            varType[v] = 1;
+            intVars[v] = 0;
+        } else if (v.rfind("s_", 0) == 0) {
+            varType[v] = 2;
+            strVars[v] = "";
+            stringOrder.push_back(v);
+        } else if (v.rfind("b_", 0) == 0) {
+            varType[v] = 4;
+            intVars[v] = 0;
+        } else if (v.rfind("m_", 0) == 0) {
+            varType[v] = 5;
+            mapOrder.push_back(v);
+            mapVars[v] = Map{};
+        } else {
+            varType[v] = 1;
+            intVars[v] = 0;
+        }
+
+        return (uint8_t)(varOrder.size() - 1);
     };
 
-    auto encodeOperand = [&](const std::string& t, bool& hasVar, bool forceVar = false) {
+    auto varIndex = [&](const std::string& v) -> uint8_t {
+        return ensureVar(v);
+    };
+
+    auto encodeOperand = [&](std::string t, bool& hasVar, bool forceVar = false) {
+        // constante explicite
+        if (!t.empty() && t[0] == '#') t.erase(0, 1);
         if (!isInt(t) && !isFloat(t) || forceVar) {
             hasVar = true;
             code.push_back(varIndex(t));
@@ -178,9 +275,9 @@ int main(int argc, char** argv) {
             uint8_t* p = (uint8_t*)&v;
             for (int i = 0; i < 4; i++) code.push_back(p[i]);
         } else {
-            int v = std::stoi(t);
+            int v = std::stoi(t, nullptr, 0); //dec et hex acceptes
             code.push_back(0xFF);
-            for (int i = 0; i < 4; i++) code.push_back((v >> (i*8)) & 0xFF);
+            for (int i = 0; i < 4; i++) code.push_back((v >> (i * 8)) & 0xFF);
         }
     };
 
@@ -194,16 +291,37 @@ int main(int argc, char** argv) {
         if (inline_comment != std::string::npos) line = trim(line.substr(0, inline_comment));
 
         //===GESTION MULTI-LIGNES POUR LES MAPS===
-        //si la ligne contient '{' mais pas encore '}' on agglomere les lignes suivantes
-        if (line.find('{') != std::string::npos && line.find('}') == std::string::npos) {
-            std::string next_line;
-            while (line.find('}') == std::string::npos && std::getline(in, next_line)) {
-                //nettoyage des commentaires dans les lignes intérieures de la map
-                size_t next_comment = next_line.find(';');
-                if (next_comment != std::string::npos) next_line = next_line.substr(0, next_comment);
-                
-                next_line = trim(next_line);
-                if (!next_line.empty()) line += " " + next_line; // Fusionne les lignes avec un espace
+        if (line.front() == '{') {
+            if (line.back() != '}') {
+                std::cerr << "Erreur de syntaxe ligne: \"" << line << "\" -> Accolade de fermeture '}' manquante." << std::endl;
+                exit(1);
+            }
+            line = line.substr(1, line.size() - 2);
+            std::istringstream mapIss(line);
+            std::string widthStr, heightStr;
+            std::getline(mapIss, widthStr, ',');
+            std::getline(mapIss, heightStr, ',');
+
+            Map m;
+            try {
+                m.width = std::stoi(trim(widthStr));
+                m.height = std::stoi(trim(heightStr));
+            } catch (const std::invalid_argument&) {
+                std::cerr << "Erreur: Largeur/Hauteur de map invalide dans la ligne: \"" << line << "\"" << std::endl;
+                exit(1);
+            }
+
+            std::string pixelStr;
+            while (std::getline(mapIss, pixelStr, ',')) {
+                pixelStr = trim(pixelStr);
+                if (!pixelStr.empty()) {
+                    try {
+                        m.pixels.push_back((uint8_t)std::stoi(pixelStr));
+                    } catch (const std::invalid_argument&) {
+                        std::cerr << "Erreur: Pixel '" << pixelStr << "' n'est pas un nombre valide dans la map ligne: \"" << line << "\"" << std::endl;
+                        exit(1);
+                    }
+                }
             }
         }
         //=======================================
@@ -214,13 +332,14 @@ int main(int argc, char** argv) {
         if (cmd == "header") {
             iss >> file;
             file.erase(std::remove(file.begin(), file.end(), '"'), file.end());
-            include_header(file);
+            include_header(file, headers_dir);
             continue;
         }
         source_lines.push_back(line);
     }
 
-    for (const std::string& line : source_lines) {
+    for (size_t i = 0; i < source_lines.size(); ++i) {
+        std::string line = source_lines[i];
         std::istringstream iss(line);
         std::string cmd;
         iss >> cmd;
@@ -261,29 +380,60 @@ int main(int argc, char** argv) {
             } else if (name.rfind("m_", 0) == 0) {
                 mapOrder.push_back(name);
                 varType[name] = 5; //map
-                size_t first = line.find('{');
-                size_t last = line.find_last_of('}');
+
+                std::string map_line = line;
+                size_t first = map_line.find('{');
+                size_t last = map_line.find_last_of('}');
+                if (first != std::string::npos && last == std::string::npos) {
+                    while (i + 1 < source_lines.size()) {
+                        std::string next_line = source_lines[++i];
+                        map_line += " " + trim(next_line);
+                        last = map_line.find_last_of('}');
+                        if (last != std::string::npos) break;
+                    }
+                    first = map_line.find('{');
+                    last = map_line.find_last_of('}');
+                }
+
                 std::string content = "";
                 if (first != std::string::npos && last != std::string::npos && last > first)
-                    content = line.substr(first + 1, last - first - 1);
+                    content = map_line.substr(first + 1, last - first - 1);
+
                 std::istringstream mapStream(content);
-                std::string widthStr, heightStr, pixelsStr;
+                std::string widthStr, heightStr;
                 std::getline(mapStream, widthStr, ',');
                 std::getline(mapStream, heightStr, ',');
-                std::getline(mapStream, pixelsStr);
+
                 Map map;
-                mapVars[name] = map;
-                map.width = (uint16_t)std::stoi(trim(widthStr), nullptr, 0);
-                map.height = (uint16_t)std::stoi(trim(heightStr), nullptr, 0);
-                std::istringstream pixelsStream(pixelsStr);
-                std::string pixel;
-                while (std::getline(pixelsStream, pixel, ','))
-                    map.pixels.push_back((uint8_t)std::stoi(trim(pixel), nullptr, 0));
-                mapVars[name] = map;
-                if (map.pixels.size() != map.width * map.height) {
-                    std::cerr << "Erreur: taille de map invalide pour " << name << std::endl;
+                try {
+                    map.width = (uint16_t)std::stoi(trim(widthStr), nullptr, 0);
+                    map.height = (uint16_t)std::stoi(trim(heightStr), nullptr, 0);
+                } catch (const std::exception&) {
+                    std::cerr << "Erreur: Dimensions de map invalides pour '" << name << "'" << std::endl;
                     exit(1);
                 }
+
+                size_t expectedPixels = static_cast<size_t>(map.width) * static_cast<size_t>(map.height);
+                std::string pixelLine;
+                while (std::getline(mapStream, pixelLine)) {
+                    std::istringstream pixelStream(pixelLine);
+                    std::string pixel;
+                    while (std::getline(pixelStream, pixel, ',')) {
+                        pixel = trim(pixel);
+                        if (pixel.empty()) continue;
+                        size_t commentPos = pixel.find(';');
+                        if (commentPos != std::string::npos) pixel = trim(pixel.substr(0, commentPos));
+                        if (pixel.empty()) continue;
+                        if (!isInt(pixel)) continue;
+                        if (map.pixels.size() < expectedPixels) {
+                            map.pixels.push_back((uint8_t)std::stoi(pixel, nullptr, 0));
+                        }
+                    }
+                }
+
+                if (map.pixels.size() < expectedPixels) map.pixels.resize(expectedPixels, 0);
+
+                mapVars[name] = map;
 
             } else {
                 std::cerr << "Erreur: type inconnu pour variable '" << name << "' (utiliser i_, f_, s_, b_, m_)" << std::endl;
@@ -362,10 +512,21 @@ int main(int argc, char** argv) {
             uint8_t op = (cmd == "cal") ? CAL : (cmd == "jmp") ? JMP : (cmd == "jpt") ? JPT : JPF;
             std::string lbl;
             iss >> lbl;
+
             code.push_back(op);
-            fixups.push_back({lbl, code.size()});
-            code.push_back(0); code.push_back(0);
-            continue;
+            if (!lbl.empty() && lbl[0] == '$') { //accepte les constantes hex et dec
+
+                lbl.erase(0,1);
+                uint16_t addr = (uint16_t)std::stoi(lbl, nullptr, 0);
+
+                code.push_back(addr & 0xFF);
+                code.push_back(addr >> 8);
+            } else {
+
+                fixups.push_back({lbl, code.size()});
+                code.push_back(0);
+                code.push_back(0);
+            }
         }
 
         if (cmd == "sqr") {
@@ -422,6 +583,21 @@ int main(int argc, char** argv) {
             else if (arg == "voidcircle") code.push_back(4);
             else if (arg == "drawmap") code.push_back(5);
             continue;
+        } 
+        
+        if (cmd == "ipf") {
+            std::string arg;
+            iss >> arg;
+            code.push_back(IPF);
+            arg = stripComma(arg);
+            if (!isInt(arg)) {
+                std::cerr << "Erreur: 'ipf' attend uniquement une constante entiere en dur (ex: ipf 5000)" << std::endl;
+                exit(1);
+            }
+
+            int val = std::stoi(arg, nullptr, 0);
+            for (int i = 0; i < 4; i++) code.push_back((val >> (i * 8)) & 0xFF);
+            continue;
         }
 
         //4. instructions a deux arguments (ADD, SUB, CPR, etc.)
@@ -462,12 +638,39 @@ int main(int argc, char** argv) {
             encodeOperand(a, hasVar);
             encodeOperand(b, hasVar);
         }
+
+        //instruction a trois arguments
+        if (cmd == "gtc") {
+            std::string a, b, c;
+            iss >> a >> b >> c;
+            a = stripComma(a);
+            b = stripComma(b);
+            c = stripComma(c);
+
+            bool a_is_constant = true;
+            for (char ch : a) {
+                if (!isdigit(ch) && ch != '-') {
+                    a_is_constant = false;
+                    break;
+                }
+            }
+            if (a_is_constant) {
+                std::cerr << "Erreur: La destination de GTC doit etre une variable." << std::endl;
+                exit(1);
+            }
+
+            code.push_back(GTC);
+            bool hasVarA = false, hasVarB = false, hasVarC = false;
+            encodeOperand(a, hasVarA);
+            encodeOperand(b, hasVarB);
+            encodeOperand(c, hasVarC);
+        }
     }
 
     //=====ECRITURE DU BINAIRE=====
 
     out.write("CASM", 4);
-    uint8_t ver = 4;
+    uint8_t ver = 6;
     out.write((char*)&ver, 1);
     uint16_t entry = labels.count("main") ? labels["main"] : 0;
     out.write((char*)&entry, 2);
@@ -480,17 +683,13 @@ int main(int argc, char** argv) {
     for (auto& v : varOrder) {
         out.put(varType[v]);
         out.put(0);
-        if (varType[v] == 1) out.write((char*)&intVars[v], 4);
+        if (varType[v] == 1 || varType[v] == 4) out.write((char*)&intVars[v], 4);
         else if (varType[v] == 3) out.write((char*)&floatVars[v], 4);
         else if (varType[v] == 2) {
             uint32_t idx = strIndexVar++;
             out.write((char*)&idx, 4);
         } else if (varType[v] == 5) {
             uint32_t idx = mapIndexVar++;
-            out.write((char*)&idx, 4);
-        } else {
-            auto it = std::find(stringOrder.begin(), stringOrder.end(), v);
-            uint32_t idx = std::distance(stringOrder.begin(), it);
             out.write((char*)&idx, 4);
         }
     }
@@ -534,4 +733,4 @@ int main(int argc, char** argv) {
 }
 
 //magnus carlasen 2024-06 for ГПСД, XS проект
-//v5
+//v6

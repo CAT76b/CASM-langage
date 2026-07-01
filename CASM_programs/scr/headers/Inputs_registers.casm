@@ -1,0 +1,57 @@
+;====================================================
+;Inputs_registers.casm
+;CASM header for emulator's Inputs
+;a inclure obligatoirement TOUJOURS apres les registres GPU !
+;====================================================
+
+crt b_IN_a, 0
+crt b_IN_b, 0
+crt b_IN_c, 0
+crt b_IN_d, 0
+crt b_IN_e, 0
+crt b_IN_f, 0
+crt b_IN_g, 0
+crt b_IN_h, 0
+crt b_IN_i, 0
+crt b_IN_j, 0
+crt b_IN_k, 0
+crt b_IN_l, 0
+crt b_IN_m, 0
+crt b_IN_n, 0
+crt b_IN_o, 0
+crt b_IN_p, 0
+crt b_IN_q, 0
+crt b_IN_r, 0
+crt b_IN_s, 0
+crt b_IN_t, 0
+crt b_IN_u, 0
+crt b_IN_v, 0
+crt b_IN_w, 0
+crt b_IN_x, 0
+crt b_IN_y, 0
+crt b_IN_z, 0
+crt b_IN_n1, 0
+crt b_IN_n2, 0
+crt b_IN_n3, 0
+crt b_IN_n4, 0
+crt b_IN_n5, 0
+crt b_IN_n6, 0
+crt b_IN_n7, 0
+crt b_IN_n8, 0
+crt b_IN_n9, 0
+crt b_IN_n0, 0
+crt b_IN_space, 0
+crt b_IN_enter, 0
+crt b_IN_maj, 0
+crt b_IN_left_click, 0
+crt b_IN_right_click, 0
+crt b_IN_up, 0
+crt b_IN_down, 0
+crt b_IN_left, 0
+crt b_IN_right, 0
+crt b_IN_comma, 0
+
+crt b_IN_pressed, 1
+crt b_IN_unpressed, 0
+
+;end of the header

@@ -27,7 +27,8 @@ enum GPU_colors {
     CPU_WHITE,
     CPU_BLACK,
     CPU_MAGENTA,
-    CPU_RAYWHITE
+    CPU_RAYWHITE,
+    CPU_BLANK
 };
 
 class GPU {
@@ -77,7 +78,7 @@ public:
             }
         }
     }
-    Color palette[25] = {
+    Color palette[26] = {
         LIGHTGRAY,
         GRAY,
         DARKGRAY,
@@ -102,14 +103,16 @@ public:
         WHITE,
         BLACK,
         MAGENTA,
-        RAYWHITE
+        RAYWHITE,
+        BLANK
     };
     void drawmap(int x, int y, int w, int h, int scale, uint8_t* map) {
         if (map == nullptr) return;
         for (int j = 0; j < h; j++) {
             for (int i = 0; i < w; i++) {
                 uint8_t colorIndex = map[j * w + i];
-                rect(x + (x * scale), y + (y * scale), scale, scale, palette[colorIndex]);
+                if (colorIndex == CPU_BLANK) continue;
+                rect(x + (i * scale), y + (j * scale), scale, scale, palette[colorIndex]);
             }
         }
     }

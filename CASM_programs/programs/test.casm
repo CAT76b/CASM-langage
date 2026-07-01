@@ -1,20 +1,35 @@
-header "GPU_2d_registers.casm"
-
 section.data
-crt i_time_start, 0
-crt i_time_current, 0
-crt i_time_elapsed, 0
-crt i_temp, 0
+header "GPU_2d_registers.casm"
+header "Inputs_registers.casm"
+header "Characters_maps_header.casm"
 
 section.code
 main:
-    ;dessine un rectangle rouge
-    set i_GPU_x, 20
-    set i_GPU_y, 10
-    set i_GPU_w, 30
-    set i_GPU_h, 45
-    set i_GPU_color, i_CPU_RED
-    gpu rect
-    slp 5000
+    ipf 50
 
+    set i_GPU_x, #10
+    set i_GPU_y, #50
+    set i_GPU_w, #8
+    set i_GPU_h, #8
+    set i_GPU_s, #3
+    set i_GPU_map, m_a
+    gpu drawmap
+
+    cpr b_IN_b, #1
+    jpt end
+
+    cpr b_IN_a, #1
+    jpt carre
+    jmp main
+
+    carre:
+        set i_GPU_x, #100
+        set i_GPU_y, #30
+        set i_GPU_w, #70
+        set i_GPU_h, #56
+        set i_GPU_color, i_CPU_RED
+        gpu rect
+        jmp main
+
+end:
 ext ;securite

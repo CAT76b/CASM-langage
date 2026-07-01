@@ -7,8 +7,12 @@
 int main(int argc, char* argv[]) {
     int scale = 4;
     if (argc > 1) {
-        scale = std::stoi(argv[1]);
-        if (scale < 1) scale = 1;
+        try {
+            scale = std::stoi(argv[1]);
+            if (scale < 1) scale = 1;
+        } catch (const std::exception&) {
+            std::cerr << "Erreur: premier argument doit etre le scale de la fenetre" << std::endl;
+        }
     }
 
     CPU cpu;
@@ -25,8 +29,6 @@ int main(int argc, char* argv[]) {
     InitWindow(GPU::WIDTH * scale, GPU::HEIGHT * scale, "CASM Emulator");
     SetTargetFPS(60);
 
-    auto start_time = std::chrono::steady_clock::now();
-
     while (!WindowShouldClose() && cpu.running) {
         if (cpu.is_sleeping) {
             uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -36,7 +38,8 @@ int main(int argc, char* argv[]) {
         }
 
         if (!cpu.is_sleeping) {
-            for (int i = 0; i < 1000 && cpu.running && !cpu.is_sleeping; i++) cpu.exe_instruction();
+            cpu.maj_Inputs_registers(); //actualisation des registres d'entree
+            for (int i = 0; i < cpu.ipf && cpu.running && !cpu.is_sleeping; i++) cpu.exe_instruction();
         }
 
         BeginDrawing();
