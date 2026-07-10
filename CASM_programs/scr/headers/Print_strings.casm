@@ -1,6 +1,6 @@
 ;================================
 ;Print_strings.casm
-;function print string for handicaped people (void function)
+;function print_string for handicaped people XD (void function)
 ;================================
 
 section.data
@@ -29,7 +29,7 @@ print_string:
     loop:
         ;chargement du caractere
         gtc i_char, s_msg, i_current_char
-        cpr s_char, #0
+        cpr i_char, #0
         jpf affichage
         ret
 
@@ -118,119 +118,156 @@ print_string:
 
     affichage_a:
         set i_GPU_map, m_a
+        gpu drawmap
         jmp incrementation
     affichage_b:
         set i_GPU_map, m_b
+        gpu drawmap
         jmp incrementation
     affichage_c:
         set i_GPU_map, m_c
+        gpu drawmap
         jmp incrementation
     affichage_d:
         set i_GPU_map, m_d
+        gpu drawmap
         jmp incrementation
     affichage_e:
         set i_GPU_map, m_e
+        gpu drawmap
         jmp incrementation
     affichage_f:
         set i_GPU_map, m_f
+        gpu drawmap
         jmp incrementation
     affichage_g:
         set i_GPU_map, m_g
+        gpu drawmap
         jmp incrementation
     affichage_h:
         set i_GPU_map, m_h
+        gpu drawmap
         jmp incrementation
     affichage_i:
         set i_GPU_map, m_i
+        gpu drawmap
         jmp incrementation
     affichage_j:
         set i_GPU_map, m_j
+        gpu drawmap
         jmp incrementation
     affichage_k:
         set i_GPU_map, m_k
+        gpu drawmap
         jmp incrementation
     affichage_l:
         set i_GPU_map, m_l
+        gpu drawmap
         jmp incrementation
     affichage_m:
         set i_GPU_map, m_m
+        gpu drawmap
         jmp incrementation
     affichage_n:
         set i_GPU_map, m_n
+        gpu drawmap
         jmp incrementation
     affichage_o:
         set i_GPU_map, m_o
+        gpu drawmap
         jmp incrementation
     affichage_p:
         set i_GPU_map, m_p
+        gpu drawmap
         jmp incrementation
     affichage_q:
         set i_GPU_map, m_q
+        gpu drawmap
         jmp incrementation
     affichage_r:
         set i_GPU_map, m_r
+        gpu drawmap
         jmp incrementation
     affichage_s:
         set i_GPU_map, m_s
+        gpu drawmap
         jmp incrementation
     affichage_t:
         set i_GPU_map, m_t
+        gpu drawmap
         jmp incrementation
     affichage_u:
         set i_GPU_map, m_u
+        gpu drawmap
         jmp incrementation
     affichage_v:
         set i_GPU_map, m_v
+        gpu drawmap
         jmp incrementation
     affichage_w:
         set i_GPU_map, m_w
+        gpu drawmap
         jmp incrementation
     affichage_x:
         set i_GPU_map, m_x
+        gpu drawmap
         jmp incrementation
     affichage_y:
         set i_GPU_map, m_y
+        gpu drawmap
         jmp incrementation
     affichage_z:
         set i_GPU_map, m_z
+        gpu drawmap
         jmp incrementation
     affichage_virgule:
         set i_GPU_map, m_virgule
+        gpu drawmap
         jmp incrementation
     affichage_point:
         set i_GPU_map, m_point
+        gpu drawmap
         jmp incrementation
     affichage_0:
         set i_GPU_map, m_n0
+        gpu drawmap
         jmp incrementation
     affichage_1:
         set i_GPU_map, m_n1
+        gpu drawmap
         jmp incrementation
     affichage_2:
         set i_GPU_map, m_n2
+        gpu drawmap
         jmp incrementation
     affichage_3:
         set i_GPU_map, m_n3
+        gpu drawmap
         jmp incrementation
     affichage_4:
         set i_GPU_map, m_n4
+        gpu drawmap
         jmp incrementation
     affichage_5:
         set i_GPU_map, m_n5
+        gpu drawmap
         jmp incrementation
     affichage_6:
         set i_GPU_map, m_n6
+        gpu drawmap
         jmp incrementation
     affichage_7:
         set i_GPU_map, m_n7
+        gpu drawmap
         jmp incrementation
     affichage_8:
         set i_GPU_map, m_n8
+        gpu drawmap
         jmp incrementation
     affichage_9:
         set i_GPU_map, m_n9
+        gpu drawmap
     
     incrementation:
-        gpu drawmap
         add i_GPU_x, i_decalage
         jmp loop

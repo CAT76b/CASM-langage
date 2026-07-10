@@ -1,0 +1,18 @@
+section.data
+header "GPU_2d_registers.casm"
+header "Inputs_registers.casm"
+header "Characters_maps_header.casm"
+crt s_text, "hello baleineau"
+crt i_s, 0
+section.code
+header "Print_strings.casm" ;fonction en LIFO
+main:
+    ipf 1000
+    set i_GPU_x, #50
+    set i_GPU_y, #50
+    set i_s, #2
+    psh s_text
+    psh i_s
+    cal print_string
+    jmp main
+    ext

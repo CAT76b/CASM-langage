@@ -2,8 +2,6 @@ section.data
     crt i_a, 0
     crt i_b, 0
     crt s_reponse, ""
-    crt s_yes, "y"
-    crt s_no, "n"
 
 section.code
 prt "bonjour!\n"
@@ -52,9 +50,9 @@ less:
 lancement:
     prt "lancer[y/n]?:"
     lct s_reponse
-    cpr s_reponse, s_yes
+    cpr s_reponse, #"y"
     jpt main
-    cpr s_reponse, s_no
+    cpr s_reponse, #"n"
     jpt end
     prt "erreur:entree invalide:"
     prt s_reponse

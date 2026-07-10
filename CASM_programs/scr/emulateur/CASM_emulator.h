@@ -530,18 +530,31 @@ public:
                 break;
             } case GTC: {
                 uint8_t dst = r8();
-                uint8_t str_index = r8();
-                uint8_t char_index = r8();
+                uint8_t strVar = r8();
+                uint8_t idxVar = r8();
 
-                if (str_index >= strings.size()) {
-                    std::cerr << "Erreur: index de chaine invalide: " << str_index << std::endl;
+                if (strVar >= vars.size() || idxVar >= vars.size() || dst >= vars.size()) {
+                    std::cerr << "GTC: indice de variable invalide." << std::endl;
+                    running = false;
+                    return;
+                }
+                if (vars[strVar].type != 2) {
+                    std::cerr << "GTC: la deuxieme variable doit etre une string" << std::endl;
                     running = false;
                     return;
                 }
 
-                const std::string& str = strings[str_index];
-                if (char_index >= str.size()) vars[dst].i = 0;
-                else vars[dst].i = static_cast<int>(str[char_index]);
+                uint32_t stringIndex = static_cast<uint32_t>(vars[strVar].i);
+                if (stringIndex >= strings.size()) {
+                    std::cerr << "GTC: index de chaine invalide." << std::endl;
+                    running = false;
+                    return;
+                }
+
+                int charIndex = vars[idxVar].i;
+                if (charIndex < 0 || charIndex >= (int)strings[stringIndex].size()) vars[dst].i = 0;
+                else vars[dst].i = static_cast<unsigned char>(strings[stringIndex][charIndex]);
+
                 break;
             } case AND:
             case OR:
@@ -553,7 +566,7 @@ public:
                 int v1 = a.isConst ? a.i : vars[a.var].i;
                 int v2 = b.isConst ? b.i : vars[b.var].i;
 
-                //verifie que ce sont des bools (0 ou 1)
+                //verifie que ce sont des bools
                 if ((v1 != 0 && v1 != 1) || (v2 != 0 && v2 != 1)) {
                     std::cerr << "Erreur: porte logique utilisee sur non-bool" << std::endl;
                     running = false;

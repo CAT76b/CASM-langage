@@ -1,51 +1,37 @@
 section.data
 crt s_lancer, ""
-crt s_yes, "y"
-crt s_no, "n"
 crt i_iterations, 0
 crt i_longueur, 0
 crt i_genere, 0
 crt s_code, ""
-crt s_empty, ""
 crt i_loop, 0
-crt i_zero, 0
 crt i_loop2, 0
-crt s_n1, "1"
-crt s_n2, "2"
-crt s_n3, "3"
-crt s_n4, "4"
-crt s_n5, "5"
-crt s_n6, "6"
-crt s_n7, "7"
-crt s_n8, "8"
-crt s_n9, "9"
-crt s_n0, "0"
 
 section.code
 main:
-    prt "Bonjour!\n"
+    prt #"Bonjour!\n"
 start:
-    prt "Lancer[y/n]?:"
+    prt #"Lancer[y/n]?:"
     lct s_lancer
-    cpr s_lancer, s_yes
+    cpr s_lancer, #"y"
     jpt principal
-    cpr s_lancer, s_no
+    cpr s_lancer, #"n"
     jpt end
     jmp error
     
 principal:
-    set i_loop, i_zero
-    set i_loop2, i_zero
-    set i_genere, i_zero
+    set i_loop, #0
+    set i_loop2, #0
+    set i_genere, #0
 
-    prt "Combien d'iterations?:"
+    prt #"Combien d'iterations?:"
     lct i_iterations
-    prt "Quelle longueur?:"
+    prt #"Quelle longueur?:"
     lct i_longueur
-    add i_longueur, 1
-    cpr i_iterations, 0
+    add i_longueur, #1
+    cpr i_iterations, #0
     jpt error2
-    cpr i_longueur, 0
+    cpr i_longueur, #0
     jpt error3
     cpr i_loop2, i_iterations
     jpt start
@@ -53,64 +39,64 @@ principal:
 generate_loop:
     add i_loop2, 1
     set i_loop, i_zero
-    set s_code, s_empty
+    set s_code, #""
 
     cal generation
-    prt "Code numero "
+    prt #"Code numero "
     prt i_loop2
-    prt ": "
+    prt #": "
     prt s_code
-    prt "\n"
+    prt #"\n"
 
     cpr i_loop2, i_iterations
     jpf generate_loop
     jmp start
 
 error:
-    prt "Erreur: entree invalide =>"
+    prt #"Erreur: entree invalide =>"
     prt s_lancer
-    prt "\n"
+    prt #"\n"
     jmp start
 error2:
-    prt "Erreur: nombre d'iterations doit etre superieur a 0\n"
+    prt #"Erreur: nombre d'iterations doit etre superieur a 0\n"
     jmp start
 error3:
-    prt "Erreur: la longueur doit etre superieur a 0\n"
+    prt #"Erreur: la longueur doit etre superieur a 0\n"
     jmp start
 
 end:
-    prt "Aurevoir!\n"
+    prt #"Aurevoir!\n"
     ext
 
 generation:
 loop:
     ;gestion des boucles
-    add i_loop, 1
+    add i_loop, #1
     cpr i_loop, i_longueur
     jpt loop_exit
     
     rnd i_genere, 9
 
     ;selection du caractere a ajouter
-    cpr i_genere, 0
+    cpr i_genere, #0
     jpt n1
-    cpr i_genere, 1
+    cpr i_genere, #1
     jpt n2
-    cpr i_genere, 2
+    cpr i_genere, #2
     jpt n3
-    cpr i_genere, 3
+    cpr i_genere, #3
     jpt n4
-    cpr i_genere, 4
+    cpr i_genere, #4
     jpt n5
-    cpr i_genere, 5
+    cpr i_genere, #5
     jpt n6
-    cpr i_genere, 6
+    cpr i_genere, #6
     jpt n7
-    cpr i_genere, 7
+    cpr i_genere, #7
     jpt n8
-    cpr i_genere, 8
+    cpr i_genere, #8
     jpt n9
-    cpr i_genere, 9
+    cpr i_genere, #9
     jpt n0
     
 loop_exit:
@@ -118,34 +104,34 @@ loop_exit:
 
 ;ajout du caractere
 n1:
-    add s_code, s_n1
+    add s_code, #"1"
     jmp loop
 n2:
-    add s_code, s_n2
+    add s_code, #"2"
     jmp loop
 n3:
-    add s_code, s_n3
+    add s_code, #"3"
     jmp loop
 n4:
-    add s_code, s_n4
+    add s_code, #"4"
     jmp loop
 n5:
-    add s_code, s_n5
+    add s_code, #"5"
     jmp loop
 n6:
-    add s_code, s_n6
+    add s_code, #"6"
     jmp loop
 n7:
-    add s_code, s_n7
+    add s_code, #"7"
     jmp loop
 n8:
-    add s_code, s_n8
+    add s_code, #"8"
     jmp loop
 n9:
-    add s_code, s_n9
+    add s_code, #"9"
     jmp loop
 n0:
-    add s_code, s_n0
+    add s_code, #"0"
     jmp loop
 
 ext ;securite

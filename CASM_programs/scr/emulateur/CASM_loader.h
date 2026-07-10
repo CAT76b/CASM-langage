@@ -55,15 +55,16 @@ public:
 
             vars[i].type = type;
             switch (type) {
-                case 1:
+                case 1: {
                     vars[i].i = static_cast<int32_t>(rawValue);
                     break;
-                case 3:
+                } case 3: {
                     std::memcpy(&vars[i].f, &rawValue, sizeof(rawValue));
                     break;
-                default:
+                } default: {
                     vars[i].index = rawValue;
                     break;
+                }
             }
         }
 
@@ -97,7 +98,7 @@ public:
         code.clear();
         code.assign(std::istreambuf_iterator<char>(file), {});
 
-        pc = entry; //on commence au debut du vecteur 'code'
+        pc = entry;
         file.close();
         return (code.size() > 0);
     }

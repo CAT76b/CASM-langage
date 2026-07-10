@@ -600,6 +600,22 @@ int main(int argc, char** argv) {
             continue;
         }
 
+        //instruction a trois arguments
+        if (cmd == "gtc") {
+            std::string a, b, c;
+            iss >> a >> b >> c;
+
+            a = stripComma(a);
+            b = stripComma(b);
+            c = stripComma(c);
+
+            code.push_back(GTC);
+            code.push_back(varIndex(a));
+            code.push_back(varIndex(b));
+            code.push_back(varIndex(c));
+            continue;
+        }
+
         //4. instructions a deux arguments (ADD, SUB, CPR, etc.)
         if (cmd == "set") {
             std::string a, b;
@@ -633,37 +649,10 @@ int main(int argc, char** argv) {
             else if (cmd == "nnd") code.push_back(NND);
             else if (cmd == "nor") code.push_back(NOR);
             else if (cmd == "rnd") code.push_back(RND);
-            else continue;
 
             encodeOperand(a, hasVar);
             encodeOperand(b, hasVar);
-        }
-
-        //instruction a trois arguments
-        if (cmd == "gtc") {
-            std::string a, b, c;
-            iss >> a >> b >> c;
-            a = stripComma(a);
-            b = stripComma(b);
-            c = stripComma(c);
-
-            bool a_is_constant = true;
-            for (char ch : a) {
-                if (!isdigit(ch) && ch != '-') {
-                    a_is_constant = false;
-                    break;
-                }
-            }
-            if (a_is_constant) {
-                std::cerr << "Erreur: La destination de GTC doit etre une variable." << std::endl;
-                exit(1);
-            }
-
-            code.push_back(GTC);
-            bool hasVarA = false, hasVarB = false, hasVarC = false;
-            encodeOperand(a, hasVarA);
-            encodeOperand(b, hasVarB);
-            encodeOperand(c, hasVarC);
+            continue;
         }
     }
 
