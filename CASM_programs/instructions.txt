@@ -43,6 +43,8 @@ tme xxx    =>récupère le time stamp actuel en secondes et le stocke dans la va
 gpu xxx    =>affiche la forme donnée (après avoir configuré les registres présents dans le header GPU_d_registers.casm) donnée
 			 et l'affiche aux coordonnées indiquées: pixel, rect, voidrect, circle, voidcircle, map
 
+gtc xxx, xxx, xxx =>retourne dans le 1er argument (int) la valeur ASCII de la lettre lu dans la string du 2e argument (string), la lettre à lire est indiqué par un int en 3e argument (0=1ere lettre)
+
 =====ARITHMETIQUE=====
 
 add xxx, xxx =>additionner 2 variables ou 2 nombres entre eux
