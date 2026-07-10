@@ -96,7 +96,9 @@ cal xxx         =>appelle une fonction locale ou externe (header)
 
 ====================
 
-Ce projet est inspiré du langage de programmation assembly (1945) et possède un compilateur en 2 parties:
--la partie principale qui est un compilateur codé en c++ et qui traduit le script casm en script binaire
--la partie secondaire qui est un interpréteur codé en c++ et qui interprète le fichier binaire
--la troisième partie qui est un dump codé lui aussi en c++ et qui affiche le binaire brut en console
+Ce projet est inspiré du langage de programmation assembly (1945) et possède un écosystème en 4 parties:
+-la première partie qui est un compilateur codé en c++ et qui traduit le script casm en script binaire
+-la seconde partie qui est un interpréteur codé en c++ et qui interprète le fichier binaire
+-la troisième partie qui est un dump codé lui aussi en c++ et qui affiche le binaire brut et l'équivalant hexadécimal en console
+-la quatrième partie qui est un émulateur encore en c++ et qui offre à CASM une infrastructure lui permettant de développer toute sa puissance
+	grace à un cpu et un gpu 
