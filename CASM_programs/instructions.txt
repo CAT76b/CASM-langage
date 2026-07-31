@@ -2,6 +2,7 @@ Toutes les instructions du CASM (C++ asembly) et comment les utiliser.
 CASM version 2 beta.
 Tous droits réservés au dévelopeur du projet.
 Les lettres xxx sont utilisés pour représenter un espace vacant qui doit être rempli.
+Les constantes sont déclarées par # (decimal) ou $ (hexadecimal)
 
 =====SECTIONS=====
 
@@ -43,7 +44,18 @@ tme xxx    =>récupère le time stamp actuel en secondes et le stocke dans la va
 gpu xxx    =>affiche la forme donnée (après avoir configuré les registres présents dans le header GPU_d_registers.casm) donnée
 			 et l'affiche aux coordonnées indiquées: pixel, rect, voidrect, circle, voidcircle, map
 
+ipf xxx    =>règle la vitesse d'exécution des instructions de l'émulateur (instructions per frames), prend uniquement des constantes en dur (sans déclaration # ou $)
+
+disk xxx   =>ouvre le fichier spécifié (entre guillemets)
+
+wrt xxx, xxx =>écrit dans le dernier fichier ouvert la string du premier argument à l'emplacement (la ligne) du second argument (int)
+
+rad xxx, xxx =>lit la ligne spécifiée par le second argument (int, le numéro de ligne en sachant que ligne 1= 0) et écrit son contenu dans le premier argument (string)
+
 gtc xxx, xxx, xxx =>retourne dans le 1er argument (int) la valeur ASCII de la lettre lu dans la string du 2e argument (string), la lettre à lire est indiqué par un int en 3e argument (0=1ere lettre)
+
+error xxx         =>initialise le label d'erreur pour les instructions protégées (si une instruction protégée à une erreur, elle saute au label initialisé)
+                    pour protéger une instruction, il faut rajouter à la fin de l'instruction .E, exemple avec add: add.E i_a, i_b
 
 =====ARITHMETIQUE=====
 
@@ -81,6 +93,8 @@ lif xxx      =>renvoit true si la variable float observée possède une valeur d
 =====SAUTS===========
 
 jmp xxx     =>sauter (le saut de base)
+    ~~~
+destination
 
 jpt xxx =>jump if true (saute seulement si la condition observé est vraie)
     ~~~
@@ -96,9 +110,9 @@ cal xxx         =>appelle une fonction locale ou externe (header)
 
 ====================
 
-Ce projet est inspiré du langage de programmation assembly (1945) et possède un écosystème en 4 parties:
--la première partie qui est un compilateur codé en c++ et qui traduit le script casm en script binaire
--la seconde partie qui est un interpréteur codé en c++ et qui interprète le fichier binaire
--la troisième partie qui est un dump codé lui aussi en c++ et qui affiche le binaire brut et l'équivalant hexadécimal en console
--la quatrième partie qui est un émulateur encore en c++ et qui offre à CASM une infrastructure lui permettant de développer toute sa puissance
-	grace à un cpu et un gpu 
+Ce projet est un langage de programmation assembleur, et possède un écosystème en 4 parties:
+-la première partie qui est un compilateur qui traduit le script casm en script binaire
+-la seconde partie qui est un interpréteur qui interprète le fichier binaire
+-la troisième partie qui est un dump qui affiche le binaire brut et l'équivalant hexadécimal en console
+-la quatrième partie qui est un émulateur qui offre à CASM une infrastructure lui permettant de développer toute sa puissance
+	grace à un cpu et un gpu et chargé par un bios (et même capable de lire/écrire des fichiers!)
