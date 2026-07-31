@@ -50,4 +50,4 @@ int main(int argc, char* argv[]) {
     CloseWindow();
 }
 
-//magnus carlasen 2024-06 for ГПСД, XS проект
+//magnus carlsen 2024-06 for ГПСД, XS проект

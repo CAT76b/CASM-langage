@@ -118,4 +118,4 @@ public:
     }
 };
 
-//magnus carlasen 2024-06 for ГПСД, XS проект
+//magnus carlsen 2024-06 for ГПСД, XS проект
