@@ -532,7 +532,7 @@ int main(int argc, char** argv) {
             iss >> lbl;
 
             if (lbl.empty()) {
-                std::cerr << "\033[31m" << "[" << lines << "] Error: invalid label: " << lbl << std::endl;
+                std::cerr << "\033[31m" << "[" << lines << "][error] JUMPS: invalid label: " << lbl << std::endl;
                 exit(1);
             }
 
@@ -548,6 +548,7 @@ int main(int argc, char** argv) {
                 code.push_back(0);
                 code.push_back(0);
             }
+            continue;
         }
 
         if (cmd == "sqr") {
@@ -628,8 +629,7 @@ int main(int argc, char** argv) {
 
         if (cmd == "disk") {
             std::string arg;
-            size_t pos = line.find("disk");
-            arg = trim(line.substr(pos + 4));
+            iss >> arg;
 
             if (arg.front() != '"' || arg.back() != '"') {
                 std::cerr << "\033[31m" << "[" << lines << "] Error: disk wait a chain: " << arg << std::endl;
@@ -683,6 +683,7 @@ int main(int argc, char** argv) {
                 code.push_back(0);
                 code.push_back(0);
             }
+            continue;
         }
 
         //instruction a trois arguments
