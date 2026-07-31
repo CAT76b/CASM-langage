@@ -2,7 +2,7 @@
 A custom programming language inspired by assembly, with a compiler and virtual machine written in C++.
 
 ## FEATURES
-- Custom assembly-like syntax
+- Custom assembly syntax
 - Compiler that translates `.casm` to binary `.bin`
 - Virtual machine to execute compiled binaries
 - Dump tool for debugging
@@ -22,3 +22,4 @@ A custom programming language inspired by assembly, with a compiler and virtual 
 ## STATUT
 - All parts of the projet (the compiler, the dump, the virtual machine and the emulator) work.
 - The VM isn't actualised
+- WARNING!!! You must compile sources to use casm
