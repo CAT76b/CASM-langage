@@ -24,3 +24,4 @@ A custom programming language inspired by assembly, with a compiler and virtual 
 - The VM isn't actualised
 - The disks folder, the file doorOS.Casm and the file doorOS_kernel are a project in developpement
 - WARNING!!! You must compile sources to use casm
+- Thanks to Raylib for this project: https://github.com/raysan5/raylib
