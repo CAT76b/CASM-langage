@@ -22,4 +22,5 @@ A custom programming language inspired by assembly, with a compiler and virtual 
 ## STATUT
 - All parts of the projet (the compiler, the dump, the virtual machine and the emulator) work.
 - The VM isn't actualised
+- The disks folder, the file doorOS.Casm and the file doorOS_kernel are a project in developpement
 - WARNING!!! You must compile sources to use casm
