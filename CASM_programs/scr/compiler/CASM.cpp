@@ -608,7 +608,7 @@ int main(int argc, char** argv) {
             else if (arg == "voidcircle") code.push_back(4);
             else if (arg == "clear") code.push_back(5);
             else if (arg == "drawmap") code.push_back(6);
-            else std::cerr << "\033[31m" << "[" << lines << "] Error: the specified gpu call type doesn't exist: " << arg << std::endl;
+            else std::cerr << "\033[31m" << "[" << lines << "][error] GPU: the specified gpu call type doesn't exist: " << arg << std::endl;
             continue;
         } 
         
@@ -618,7 +618,7 @@ int main(int argc, char** argv) {
             code.push_back(IPF);
             arg = stripComma(arg);
             if (!isInt(arg)) {
-                std::cerr << "\033[31m" << "]Error: 'ipf' wait an integer constant without # (ex: ipf 5000)" << std::endl;
+                std::cerr << "\033[31m" << "][error] IPF: 'ipf' wait an integer constant without # (ex: ipf 5000)" << std::endl;
                 exit(1);
             }
 
