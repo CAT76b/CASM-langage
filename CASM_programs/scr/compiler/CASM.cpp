@@ -12,6 +12,8 @@
 #include <string>
 std::unordered_set<std::string> included_headers;
 std::vector<std::string> source_lines;
+int lines = 0;
+constexpr uint8_t ERROR_OFFSET = 160;
 
 //============OPCODES============
 
@@ -47,7 +49,12 @@ enum OpCode {
     TME,
     GPU_E,
     IPF,
-    GTC
+    GTC,
+    ITS,
+    DISK,
+    WRT,
+    RAD,
+    ERROR
 };
 
 struct Fixup {
@@ -161,7 +168,7 @@ void include_header(const std::string& name, const std::filesystem::path& header
 
     std::ifstream file(header_path);
     if (!file) {
-        std::cerr << "Erreur: Header non trouve: " << header_path.string() << std::endl;
+        std::cerr << "Error: Header not found: " << header_path.string() << std::endl;
         exit(1);
     }
 
@@ -201,15 +208,15 @@ int main(int argc, char** argv) {
     std::filesystem::path executable_path = argc > 0 ? argv[0] : "";
     std::filesystem::path headers_dir = find_headers_dir(input_path, executable_path);
     if (headers_dir.empty()) {
-        std::cerr << "Erreur: Repertoire des headers introuvable" << std::endl;
+        std::cerr << "Error: header's repository unfindable" << std::endl;
         return 1;
     }
 
     std::ifstream in(input_path);
-    if (!in) { std::cerr << "Erreur ouverture source" << std::endl; return 1; }
+    if (!in) { std::cerr << "Error in source opening" << std::endl; return 1; }
 
     std::ofstream out(argv[2], std::ios::binary);
-    if (!out) { std::cerr << "Erreur ouverture binaire" << std::endl; return 1; }
+    if (!out) { std::cerr << "Error in binary opening" << std::endl; return 1; }
 
     std::vector<uint8_t> code;
     std::unordered_map<std::string, uint16_t> labels;
@@ -284,6 +291,7 @@ int main(int argc, char** argv) {
     std::string line;
     while (std::getline(in, line)) {
         line = trim(line);
+        if (line.empty()) lines++;
         if (line.empty() || line[0] == ';') continue;
 
         //supprime les commentaires
@@ -293,7 +301,7 @@ int main(int argc, char** argv) {
         //===GESTION MULTI-LIGNES POUR LES MAPS===
         if (line.front() == '{') {
             if (line.back() != '}') {
-                std::cerr << "Erreur de syntaxe ligne: \"" << line << "\" -> Accolade de fermeture '}' manquante." << std::endl;
+                std::cerr << "\033[31m" << "[" << lines << "][syntax] Error in line: \"" << line << "\" -> end curly bracket '}' missing" << std::endl;
                 exit(1);
             }
             line = line.substr(1, line.size() - 2);
@@ -307,18 +315,18 @@ int main(int argc, char** argv) {
                 m.width = std::stoi(trim(widthStr));
                 m.height = std::stoi(trim(heightStr));
             } catch (const std::invalid_argument&) {
-                std::cerr << "Erreur: Largeur/Hauteur de map invalide dans la ligne: \"" << line << "\"" << std::endl;
+                std::cerr << "\033[31m" << "[" << lines << "] Error: invalid map width/height in line: \"" << line << "\"" << std::endl;
                 exit(1);
             }
 
             std::string pixelStr;
-            while (std::getline(mapIss, pixelStr, ',')) {
+            while (std::getline(mapIss, pixelStr, ',')) { //AJOUTER SYSTEME DE VERIFICATION DE VALIDITE DES NOMBRES
                 pixelStr = trim(pixelStr);
                 if (!pixelStr.empty()) {
                     try {
                         m.pixels.push_back((uint8_t)std::stoi(pixelStr));
                     } catch (const std::invalid_argument&) {
-                        std::cerr << "Erreur: Pixel '" << pixelStr << "' n'est pas un nombre valide dans la map ligne: \"" << line << "\"" << std::endl;
+                        std::cerr << "\033[31m" << "[" << lines << "] Error: pixel '" << pixelStr << "' isn't a valid number in line: \"" << line << "\"" << std::endl;
                         exit(1);
                     }
                 }
@@ -339,6 +347,9 @@ int main(int argc, char** argv) {
     }
 
     for (size_t i = 0; i < source_lines.size(); ++i) {
+        bool protected_instruction = false;
+        lines++;
+
         std::string line = source_lines[i];
         std::istringstream iss(line);
         std::string cmd;
@@ -352,10 +363,9 @@ int main(int argc, char** argv) {
             std::string name, val;
             iss >> name >> val;
             name = stripComma(name);
-
             varOrder.push_back(name);
 
-            //=====TYPE DEDUIT DU NOM=====
+            //=====TYPE==================
             if (name.rfind("f_", 0) == 0) {
                 varType[name] = 3; //float
                 floatVars[name] = isFloat(val) ? std::stof(val) : (float)std::stoi(val);
@@ -369,8 +379,7 @@ int main(int argc, char** argv) {
                 size_t last = line.find_last_of('"');
                 std::string content = "";
 
-                if (first != std::string::npos && last != std::string::npos && last > first)
-                    content = parse_escape_sequences(line.substr(first + 1, last - first - 1));
+                if (first != std::string::npos && last != std::string::npos && last > first) content = parse_escape_sequences(line.substr(first + 1, last - first - 1));
 
                 strVars[name] = content;
                 stringOrder.push_back(name);
@@ -409,7 +418,7 @@ int main(int argc, char** argv) {
                     map.width = (uint16_t)std::stoi(trim(widthStr), nullptr, 0);
                     map.height = (uint16_t)std::stoi(trim(heightStr), nullptr, 0);
                 } catch (const std::exception&) {
-                    std::cerr << "Erreur: Dimensions de map invalides pour '" << name << "'" << std::endl;
+                    std::cerr << "\033[31m" << "[" << lines << "] Error: invalid map's dimensions for '" << name << "'" << std::endl;
                     exit(1);
                 }
 
@@ -436,7 +445,7 @@ int main(int argc, char** argv) {
                 mapVars[name] = map;
 
             } else {
-                std::cerr << "Erreur: type inconnu pour variable '" << name << "' (utiliser i_, f_, s_, b_, m_)" << std::endl;
+                std::cerr << "\033[31m" << "[" << lines << "] Error: unknown type for variable '" << name << "' (use i_, f_, s_, b_, m_)" << std::endl;
                 exit(1);
             }
 
@@ -446,9 +455,18 @@ int main(int argc, char** argv) {
         //=====SECTION CODE=====
         if (!inCode) continue;
 
+        if (cmd.ends_with(".E")) {
+            protected_instruction = true;
+            cmd.erase(cmd.size() - 2); //retire .E
+        }
+
         //1. labels
         if (cmd.back() == ':') {
             std::string label = cmd.substr(0, cmd.size() - 1);
+            if (labels.contains(label)) {
+                std::cerr << "\033[31m" << "[" << lines << "] Error: the label <<" << label << ">> already exist" << std::endl;
+                exit(1);
+            }
             labels[label] = (uint16_t)code.size();
             continue;
         }
@@ -491,7 +509,7 @@ int main(int argc, char** argv) {
             continue;
         }
 
-        if (cmd == "lct") {
+        if (cmd == "lct") { //AJOUTER SYSTEM DE DEBUG
             std::string arg;
             iss >> arg;
             code.push_back(LCT);
@@ -513,16 +531,19 @@ int main(int argc, char** argv) {
             std::string lbl;
             iss >> lbl;
 
+            if (lbl.empty()) {
+                std::cerr << "\033[31m" << "[" << lines << "] Error: invalid label: " << lbl << std::endl;
+                exit(1);
+            }
+
             code.push_back(op);
             if (!lbl.empty() && lbl[0] == '$') { //accepte les constantes hex et dec
-
                 lbl.erase(0,1);
                 uint16_t addr = (uint16_t)std::stoi(lbl, nullptr, 0);
 
                 code.push_back(addr & 0xFF);
                 code.push_back(addr >> 8);
             } else {
-
                 fixups.push_back({lbl, code.size()});
                 code.push_back(0);
                 code.push_back(0);
@@ -532,9 +553,11 @@ int main(int argc, char** argv) {
         if (cmd == "sqr") {
             std::string a;
             iss >> a;
-            code.push_back(SQR);
+
+            code.push_back(protected_instruction ? SQR + ERROR_OFFSET : SQR);
             bool hv = false;
             encodeOperand(stripComma(a), hv);
+            std::cout << "\033[33m" << "[" << lines << "][warning]SQR (square root): verify if the division by zero may take place" << std::endl;
             continue;
         }
 
@@ -552,6 +575,7 @@ int main(int argc, char** argv) {
             iss >> arg;
             code.push_back(LOD);
             code.push_back(varIndex(stripComma(arg)));
+            std::cout << "\033[33m" << "[" << lines << "][warning]LOD (loading): verify if the loaded variable is the good type" << std::endl;
             continue;
         }
 
@@ -581,7 +605,9 @@ int main(int argc, char** argv) {
             else if (arg == "voidrect") code.push_back(2);
             else if (arg == "circle") code.push_back(3);
             else if (arg == "voidcircle") code.push_back(4);
-            else if (arg == "drawmap") code.push_back(5);
+            else if (arg == "clear") code.push_back(5);
+            else if (arg == "drawmap") code.push_back(6);
+            else std::cerr << "\033[31m" << "[" << lines << "] Error: the specified gpu call type doesn't exist: " << arg << std::endl;
             continue;
         } 
         
@@ -591,13 +617,72 @@ int main(int argc, char** argv) {
             code.push_back(IPF);
             arg = stripComma(arg);
             if (!isInt(arg)) {
-                std::cerr << "Erreur: 'ipf' attend uniquement une constante entiere en dur (ex: ipf 5000)" << std::endl;
+                std::cerr << "\033[31m" << "]Error: 'ipf' wait an integer constant without # (ex: ipf 5000)" << std::endl;
                 exit(1);
             }
 
             int val = std::stoi(arg, nullptr, 0);
             for (int i = 0; i < 4; i++) code.push_back((val >> (i * 8)) & 0xFF);
             continue;
+        }
+
+        if (cmd == "disk") {
+            std::string arg;
+            size_t pos = line.find("disk");
+            arg = trim(line.substr(pos + 4));
+
+            if (arg.front() != '"' || arg.back() != '"') {
+                std::cerr << "\033[31m" << "[" << lines << "] Error: disk wait a chain: " << arg << std::endl;
+                exit(1);
+            }
+
+            std::string content = parse_escape_sequences(arg.substr(1, arg.size() - 2));
+            uint16_t strIndex = 0;
+            bool found = false;
+            for (size_t i = 0; i < stringOrder.size(); i++) {
+                if (strVars[stringOrder[i]] == content) {
+                    strIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                std::string litName = "_lit" + std::to_string(stringOrder.size());
+                strVars[litName] = content;
+                stringOrder.push_back(litName);
+                strIndex = stringOrder.size() - 1;
+            }
+
+            code.push_back(protected_instruction ? DISK + ERROR_OFFSET : DISK);
+            code.push_back(0xFD);
+            code.push_back(strIndex & 0xFF);
+            code.push_back((strIndex >> 8) & 0xFF);
+
+            continue;
+        }
+
+        if (cmd == "error") {
+            std::string lbl;
+            iss >> lbl;
+
+            if (lbl.empty()) {
+                std::cerr << "\033[31m" << "[" << lines << "] Error: invalid label: " << lbl << std::endl;
+                exit(1);
+            }
+
+            code.push_back(ERROR);
+            if (!lbl.empty() && lbl[0] == '$') { //accepte les constantes hex et dec
+                lbl.erase(0,1);
+                uint16_t addr = (uint16_t)std::stoi(lbl, nullptr, 0);
+
+                code.push_back(addr & 0xFF);
+                code.push_back(addr >> 8);
+            } else {
+                fixups.push_back({lbl, code.size()});
+                code.push_back(0);
+                code.push_back(0);
+            }
         }
 
         //instruction a trois arguments
@@ -609,7 +694,9 @@ int main(int argc, char** argv) {
             b = stripComma(b);
             c = stripComma(c);
 
-            code.push_back(GTC);
+            std::cout << "\033[33m" << "[" << lines << "][warning]GTC (get char): gtc use in this order [gtc int, str, int]" << std::endl;
+
+            code.push_back(protected_instruction ? GTC + ERROR_OFFSET : GTC);
             code.push_back(varIndex(a));
             code.push_back(varIndex(b));
             code.push_back(varIndex(c));
@@ -623,10 +710,57 @@ int main(int argc, char** argv) {
             a = stripComma(a);
             b = stripComma(b);
 
-            code.push_back(SET);
+            code.push_back(protected_instruction ? SET + ERROR_OFFSET : SET);
             code.push_back(varIndex(a)); //destination
             bool hasVar = false;
             encodeOperand(b, hasVar);
+            continue;
+        }
+
+        if (cmd == "its") {
+            std::string a, b;
+            iss >> a >> b;
+            a = stripComma(a);
+            b = stripComma(b);
+
+            code.push_back(protected_instruction ? ITS + ERROR_OFFSET : ITS);
+            code.push_back(varIndex(a)); //index de la variable destination
+            code.push_back(varIndex(b)); //index de la variable source
+            continue;
+        }
+
+        if (cmd == "wrt") {
+            std::string src, addr;
+            iss >> src >> addr;
+            code.push_back(protected_instruction ? WRT + ERROR_OFFSET : WRT);
+            src = stripComma(src);
+            addr = stripComma(addr);
+
+            //variable à ecrire
+            code.push_back(varIndex(src));
+
+            //adresse
+            bool hasVar = false;
+            if (!addr.empty() && addr[0] == '$') addr.erase(0, 1);
+            encodeOperand(addr, hasVar);
+            continue;
+        }
+
+        if (cmd == "rad") {
+            std::string dst, addr;
+            iss >> dst >> addr;
+            code.push_back(protected_instruction ? RAD + ERROR_OFFSET : RAD);
+            dst = stripComma(dst);
+            addr = stripComma(addr);
+
+            //variable destination
+            code.push_back(varIndex(dst));
+
+            //adresse
+            bool hasVar = false;
+            if (!addr.empty() && addr[0] == '$') addr.erase(0, 1);
+            encodeOperand(addr, hasVar);
+
             continue;
         }
 
@@ -637,13 +771,13 @@ int main(int argc, char** argv) {
             b = stripComma(b);
             bool hasVar = false;
 
-            if (cmd == "add") code.push_back(ADD);
-            else if (cmd == "sub") code.push_back(SUB);
-            else if (cmd == "mul") code.push_back(MUL);
-            else if (cmd == "div") code.push_back(DIV);
-            else if (cmd == "pow") code.push_back(POW);
-            else if (cmd == "cpr") code.push_back(CPR);
-            else if (cmd == "cpg") code.push_back(CPG);
+            if (cmd == "add")      code.push_back(protected_instruction ? ADD + ERROR_OFFSET : ADD);
+            else if (cmd == "sub") code.push_back(protected_instruction ? SUB + ERROR_OFFSET : SUB);
+            else if (cmd == "mul") code.push_back(protected_instruction ? MUL + ERROR_OFFSET : MUL);
+            else if (cmd == "div") code.push_back(protected_instruction ? DIV + ERROR_OFFSET : DIV);
+            else if (cmd == "pow") code.push_back(protected_instruction ? POW + ERROR_OFFSET : POW);
+            else if (cmd == "cpr") code.push_back(protected_instruction ? CPR + ERROR_OFFSET : CPR);
+            else if (cmd == "cpg") code.push_back(protected_instruction ? CPG + ERROR_OFFSET : CPG);
             else if (cmd == "and") code.push_back(AND);
             else if (cmd == "or")  code.push_back(OR);
             else if (cmd == "nnd") code.push_back(NND);
@@ -654,6 +788,9 @@ int main(int argc, char** argv) {
             encodeOperand(b, hasVar);
             continue;
         }
+
+        std::cout << "[" << lines << "] Error: unknown op code: " << cmd << std::endl;
+        exit(1);
     }
 
     //=====ECRITURE DU BINAIRE=====
@@ -706,20 +843,21 @@ int main(int argc, char** argv) {
     //chargement du code
     for (auto& f : fixups) {
         if (labels.find(f.label) == labels.end()) {
-            std::cerr << "Erreur: Label '" << f.label << "' non trouve!" << std::endl;
+            std::cerr << "\033[31m" << "[" << lines << "] Error: label '" << f.label << "' unfinded" << std::endl;
             exit(1);
         }
+
         uint16_t addr = labels[f.label];
-        std::cout << "[DEBUG] Fixup pour '" << f.label << "' -> adresse 0x" << std::hex << addr << std::endl;
+        std::cout << "\033[33m" << "[DEBUG] Fixup for '" << f.label << "' -> adresse 0x" << std::hex << addr << std::endl;
         code[f.position] = addr & 0xFF; //octet bas
         code[f.position + 1] = (addr >> 8); //octet haut
     }
 
     out.write((char*)code.data(), code.size());
 
-    std::cout << "Compilation OK: " << argv[2] << std::endl;
+    std::cout << "\033[0m" << "Compilation finished: " << argv[2] << std::endl;
     return 0;
 }
 
-//magnus carlasen 2024-06 for ГПСД, XS проект
-//v6
+//magnus carlsen 2024-06 for ГПСД, XS проект
+//v7
