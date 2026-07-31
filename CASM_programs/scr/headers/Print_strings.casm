@@ -12,14 +12,13 @@ crt i_decalage, 8
 
 section.code
 print_string:
-    ;chargement des parametres dans les variables locales
-    lod i_scale
+    ;chargement du parametre dans la variable locale
     lod s_msg
 
     ;chargement des registres gpu
-    set i_GPU_s, i_scale
     set i_GPU_w, #8
     set i_GPU_h, #8
+    set i_scale, i_GPU_s
 
     set i_current_char, #0  ;reinitialisation du compteur de caractere
     set i_decalage, #8      ;reinitialisation du decalage entre les caracteres
@@ -229,45 +228,45 @@ print_string:
         gpu drawmap
         jmp incrementation
     affichage_0:
-        set i_GPU_map, m_n0
+        set i_GPU_map, m_0
         gpu drawmap
         jmp incrementation
     affichage_1:
-        set i_GPU_map, m_n1
+        set i_GPU_map, m_1
         gpu drawmap
         jmp incrementation
     affichage_2:
-        set i_GPU_map, m_n2
+        set i_GPU_map, m_2
         gpu drawmap
         jmp incrementation
     affichage_3:
-        set i_GPU_map, m_n3
+        set i_GPU_map, m_3
         gpu drawmap
         jmp incrementation
     affichage_4:
-        set i_GPU_map, m_n4
+        set i_GPU_map, m_4
         gpu drawmap
         jmp incrementation
     affichage_5:
-        set i_GPU_map, m_n5
+        set i_GPU_map, m_5
         gpu drawmap
         jmp incrementation
     affichage_6:
-        set i_GPU_map, m_n6
+        set i_GPU_map, m_6
         gpu drawmap
         jmp incrementation
     affichage_7:
-        set i_GPU_map, m_n7
+        set i_GPU_map, m_7
         gpu drawmap
         jmp incrementation
     affichage_8:
-        set i_GPU_map, m_n8
+        set i_GPU_map, m_8
         gpu drawmap
         jmp incrementation
     affichage_9:
-        set i_GPU_map, m_n9
+        set i_GPU_map, m_9
         gpu drawmap
-    
+
     incrementation:
         add i_GPU_x, i_decalage
         jmp loop

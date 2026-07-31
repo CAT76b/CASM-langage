@@ -50,8 +50,10 @@ crt b_IN_down, 0
 crt b_IN_left, 0
 crt b_IN_right, 0
 crt b_IN_comma, 0
+crt b_IN_point, 0
+crt b_IN_backspace, 0
 
-crt b_IN_pressed, 1
-crt b_IN_unpressed, 0
+;crt b_IN_pressed, 1
+;crt b_IN_unpressed, 0
 
 ;end of the header

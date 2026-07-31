@@ -1,0 +1,1601 @@
+;=============================
+;CASM doorOS
+;640x480
+;=============================
+
+section.data
+;DESKTOP======================================
+crt s_loading_msg, "hard disk loading"
+crt s_id_msg_request, "enter session code"
+crt s_id_request_reject, "invalid password"
+crt s_password, ""
+
+crt s_desktop_console_word, "bluestar"
+crt s_desktop_empty, "empty"
+crt s_desktop_exit, "exit"
+crt s_return_boot_msg, "disk unloading"
+crt i_desktop_x, 1
+crt i_desktop_y, 1
+
+;SETTING======================================
+crt s_settings_titre, "settings"
+crt s_setting_text_1, "kernel speed, ipf"
+crt s_setting_text_2, "password"
+crt i_parametres_y, 1
+crt i_parametres_x, 1
+crt s_new_password_welcome, "please enter password"
+crt s_params_bouton1, "1ipf"
+crt s_params_bouton2, "800ipf"
+crt s_params_bouton3, "1200ipf"
+crt s_params_bouton4, "1600ipf"
+crt s_params_ipf_text, "instructions per frames"
+
+;LOGOS========================================
+crt m_console_logo, {9, 14,
+    25, 25, 25,  4, 25,  4, 25, 25, 25,
+    25,  4, 4 ,  4, 4 ,  4,  4,  4, 25,
+     4,  4, 25,  4, 25,  4, 25, 25, 25,
+     4, 25, 25,  4, 25,  4, 25, 25, 25,
+     4, 25, 25,  4, 25,  4, 25, 25, 25,
+     4,  4, 25,  4, 25,  4, 25, 25, 25,
+    25,  4, 4 ,  4, 4 ,  4,  4,  4, 25,
+    25, 25, 25,  4, 25,  4, 25,  4,  4,
+    25, 25, 25,  4, 25,  4, 25, 25,  4,
+    25, 25, 25,  4, 25,  4, 25, 25,  4,
+    25, 25, 25,  4, 25,  4, 25, 25,  4,
+    25, 25, 25,  4, 25,  4, 25,  4,  4,
+    25,  4, 4 ,  4, 4 ,  4,  4,  4, 25,
+    25, 25, 25,  4, 25,  4, 25, 25, 25,  
+}
+crt m_paraplegique_logo, {11, 11,
+    21, 21, 25, 25, 21, 21, 21, 25, 25, 21, 21,
+    21, 1 , 1 , 25, 21, 1 , 21, 25, 21, 1 , 21,
+    25, 21, 1 , 1 , 21, 1 , 21, 21, 1 , 1 , 25,
+    25, 25, 21, 1 , 1 , 25, 1 , 1 , 1 , 25, 25,
+    1 , 21, 21, 1 , 25, 25, 25, 1 , 21, 21, 1 ,
+    21, 1 , 1 , 25, 25, 25, 25, 25, 1 , 1 , 21,
+    1 , 21, 21, 1 , 25, 25, 25, 1 , 21, 21, 1 ,
+    25, 25, 1 , 1 , 1 , 25, 1 , 1 , 21, 25, 25,
+    25, 1 , 1 , 21, 21, 1 , 21, 1 , 1 , 21, 25,
+    21, 1 , 21, 25, 21, 1 , 21, 25, 1 , 1 , 21,
+    21, 21, 25, 25, 21, 21, 21, 25, 25, 21, 21,
+}
+
+crt m_death_note_logo, {12, 12,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+    21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21,
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+    21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21,
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+    21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21,
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+    21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21,
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+    25, 25, 21, 21, 21, 21, 21, 21, 21, 21, 25, 25,
+}
+
+;CONSOLE======================================
+crt s_bluestar_welcome, "welcome to bluestar konsole"
+
+crt s_input_buffer, ""
+crt s_input_sent, ""
+crt i_line, 16
+crt i_instruction, 0
+crt i_char_count, 0
+crt s_return, ""
+crt i_char, 0
+crt s_arg, ""
+crt i_parsed, 0
+crt i_adress, 0
+crt b_bool_read, 0
+crt s_bool_true, "true"
+crt s_bool_false, "false"
+
+crt s_a, "a"
+crt s_b, "b"
+crt s_c, "c"
+crt s_d, "d"
+crt s_e, "e"
+crt s_f, "f"
+crt s_g, "g"
+crt s_h, "h"
+crt s_i, "i"
+crt s_j, "j"
+crt s_k, "k"
+crt s_l, "l"
+crt s_m, "m"
+crt s_n, "n"
+crt s_o, "o"
+crt s_p, "p"
+crt s_q, "q"
+crt s_r, "r"
+crt s_s, "s"
+crt s_t, "t"
+crt s_u, "u"
+crt s_v, "v"
+crt s_w, "w"
+crt s_x, "x"
+crt s_y, "y"
+crt s_z, "z"
+crt s_1, "1"
+crt s_2, "2"
+crt s_3, "3"
+crt s_4, "4"
+crt s_5, "5"
+crt s_6, "6"
+crt s_7, "7"
+crt s_8, "8"
+crt s_9, "9"
+crt s_0, "0"
+crt s_space, " "
+crt s_comma, ","
+crt s_point, "."
+crt s_empty, ""
+
+;TEXT EDITOR==============================
+crt b_gave_adress, 0
+crt i_mem_line, 0
+crt s_death_note_welcome, "death note text editor"
+
+section.code
+kernel_start:
+    ipf 1200
+
+    ;clear ecran et chargement du disque
+    set i_GPU_color, i_CPU_BLACK
+    gpu clear
+    set i_GPU_x, #184
+    set i_GPU_y, #220
+    set i_GPU_s, #2
+    psh s_loading_msg
+    cal print_string
+    slp 1000
+    set i_GPU_color, i_CPU_BLACK
+    gpu clear
+
+    ;position d'affichage
+    set i_GPU_color, i_CPU_WHITE
+    set i_GPU_x, #1
+    set i_GPU_y, #1
+    set i_GPU_s, #1
+    psh s_id_msg_request
+    cal print_string
+    add i_GPU_x, #144
+
+    identification_loop:
+        ;affichage des inputs
+        set i_GPU_s, #1
+        set i_GPU_x, #1
+        set i_GPU_y, i_line
+        
+        ;check des entrees
+        cpr s_input_sent, s_empty
+        jpf password_id
+        cal input_detector
+
+        ;affichage des entrees
+        psh s_input_buffer
+        cal print_string
+
+        jmp identification_loop
+    id_checked:
+    desktop_load:
+    slp #100
+    
+    ;clear de l'ecran
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu clear
+
+    ;AFFICHAGE ICONES===============
+    ;konsole
+    set i_GPU_x, #40
+    set i_GPU_y, #40
+    set i_GPU_w, #9
+    set i_GPU_h, #14
+    set i_GPU_map, m_console_logo
+    set i_GPU_s, #4
+    gpu drawmap
+
+    ;settings
+    set i_GPU_x, #140
+    set i_GPU_y, #38
+    set i_GPU_w, #11
+    set i_GPU_h, #11
+    set i_GPU_map, m_paraplegique_logo
+    set i_GPU_s, #4
+    gpu drawmap
+
+    ;AFFICHAGE BOUTONS==============
+    ;ligne 1===============
+    ;bouton 1
+    set i_GPU_s, #1
+    set i_GPU_x, #30
+    set i_GPU_y, #116
+    psh s_desktop_console_word
+    cal print_string
+
+    ;bouton 2
+    set i_GPU_x, #130
+    psh s_settings_titre
+    cal print_string
+
+    ;bouton 3
+    set i_GPU_x, #230
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 4
+    set i_GPU_x, #330
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 5
+    set i_GPU_x, #430
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 6
+    set i_GPU_x, #530
+    psh s_desktop_empty
+    cal print_string
+
+    ;ligne 2===============
+    set i_GPU_x, #30
+
+    ;bouton 7
+    set i_GPU_s, #1
+    add i_GPU_y, #120
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 8
+    set i_GPU_x, #130
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 9
+    set i_GPU_x, #230
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 10
+    set i_GPU_x, #330
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 11
+    set i_GPU_x, #430
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 12
+    set i_GPU_x, #530
+    psh s_desktop_empty
+    cal print_string
+
+    ;ligne 3===============
+    set i_GPU_x, #30
+
+    ;bouton 13
+    set i_GPU_s, #1
+    add i_GPU_y, #120
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 14
+    set i_GPU_x, #130
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 15
+    set i_GPU_x, #230
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 16
+    set i_GPU_x, #330
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 17
+    set i_GPU_x, #430
+    psh s_desktop_empty
+    cal print_string
+
+    ;bouton 18
+    set i_GPU_x, #530
+    psh s_desktop_exit
+    cal print_string
+
+    ;initialisation carre de selection du desktop
+    set i_GPU_x, #25
+    set i_GPU_y, #111
+    set i_GPU_w, #100
+    set i_GPU_h, #20
+    set i_GPU_t, #2
+    gpu voidrect
+
+    kernel_loop:
+        ;detection des touches du tableau
+        cpr b_IN_up, #1
+        jpt desktop_up
+        cpr b_IN_down, #1
+        jpt desktop_down
+        cpr b_IN_left, #1
+        jpt desktop_left
+        cpr b_IN_right, #1
+        jpt desktop_right
+
+        gpu voidrect ;affichage selection
+
+        ;detection d'enter pour lancer application selectionnee
+        cpr b_IN_enter, #1
+        jpt desktop_application_launch
+
+        jmp kernel_loop
+
+;=====CONSOLE MAIN===============
+console_launch:
+    ;clear de l'ecran et preparation console
+    set i_GPU_color, i_CPU_BLACK
+    gpu clear
+    set i_GPU_s, #1
+    set i_GPU_x, #1
+    set i_GPU_y, #1
+    set i_line, #16
+    set s_input_sent, s_empty
+    
+    ;hello de la console
+    psh s_bluestar_welcome
+    cal print_string
+console:
+    set s_arg, s_empty
+    set i_parsed, #0
+    cpr i_char, #0
+
+    set i_GPU_s, #1
+    set i_GPU_x, #1
+    set i_GPU_y, i_line
+
+    cpr s_input_sent, s_empty
+    jpf interpret_input
+    cal input_detector
+    set i_GPU_color, i_CPU_WHITE
+
+    psh s_input_buffer
+    cal print_string
+
+    cpr b_IN_maj, #1
+    jpf console
+    jmp desktop_load
+
+========CONSOLE ROUTINES==================
+    input_detector:
+        ;alphabet
+        cpr b_IN_a, #1
+        jpt a_pressed
+        cpr b_IN_b, #1
+        jpt b_pressed
+        cpr b_IN_c, #1
+        jpt c_pressed
+        cpr b_IN_d, #1
+        jpt d_pressed
+        cpr b_IN_e, #1
+        jpt e_pressed
+        cpr b_IN_f, #1
+        jpt f_pressed
+        cpr b_IN_g, #1
+        jpt g_pressed
+        cpr b_IN_h, #1
+        jpt h_pressed
+        cpr b_IN_i, #1
+        jpt i_pressed
+        cpr b_IN_j, #1
+        jpt j_pressed
+        cpr b_IN_k, #1
+        jpt k_pressed
+        cpr b_IN_l, #1
+        jpt l_pressed
+        cpr b_IN_m, #1
+        jpt m_pressed
+        cpr b_IN_n, #1
+        jpt n_pressed
+        cpr b_IN_o, #1
+        jpt o_pressed
+        cpr b_IN_p, #1
+        jpt p_pressed
+        cpr b_IN_q, #1
+        jpt q_pressed
+        cpr b_IN_r, #1
+        jpt r_pressed
+        cpr b_IN_s, #1
+        jpt s_pressed
+        cpr b_IN_t, #1
+        jpt t_pressed
+        cpr b_IN_u, #1
+        jpt u_pressed
+        cpr b_IN_v, #1
+        jpt v_pressed
+        cpr b_IN_w, #1
+        jpt w_pressed
+        cpr b_IN_x, #1
+        jpt x_pressed
+        cpr b_IN_y, #1
+        jpt y_pressed
+        cpr b_IN_z, #1
+        jpt z_pressed
+
+        ;nombres
+        cpr b_IN_n1, #1
+        jpt 1_pressed
+        cpr b_IN_n2, #1
+        jpt 2_pressed
+        cpr b_IN_n3, #1
+        jpt 3_pressed
+        cpr b_IN_n4, #1
+        jpt 4_pressed
+        cpr b_IN_n5, #1
+        jpt 5_pressed
+        cpr b_IN_n6, #1
+        jpt 6_pressed
+        cpr b_IN_n7, #1
+        jpt 7_pressed
+        cpr b_IN_n8, #1
+        jpt 8_pressed
+        cpr b_IN_n9, #1
+        jpt 9_pressed
+        cpr b_IN_n0, #1
+        jpt 0_pressed
+
+        ;autre
+        cpr b_IN_space, #1
+        jpt space_pressed
+        cpr b_IN_comma, #1
+        jpt comma_pressed
+        cpr b_IN_point, #1
+        jpt point_pressed
+        cpr b_IN_backspace, #1
+        jpt backspace_pressed
+        cpr b_IN_enter, #1
+        jpt enter_pressed
+
+        ret
+
+    a_pressed:
+        add s_input_buffer, s_a
+        slp #90
+        ret
+    b_pressed:
+        add s_input_buffer, s_b
+        slp #90
+        ret
+    c_pressed:
+        add s_input_buffer, s_c
+        slp #90
+        ret
+    d_pressed:
+        add s_input_buffer, s_d
+        slp #90
+        ret
+    e_pressed:
+        add s_input_buffer, s_e
+        slp #90
+        ret
+    f_pressed:
+        add s_input_buffer, s_f
+        slp #90
+        ret
+    g_pressed:
+        add s_input_buffer, s_g
+        slp #90
+        ret
+    h_pressed:
+        add s_input_buffer, s_h
+        slp #90
+        ret
+    i_pressed:
+        add s_input_buffer, s_i
+        slp #90
+        ret
+    j_pressed:
+        add s_input_buffer, s_j
+        slp #90
+        ret
+    k_pressed:
+        add s_input_buffer, s_k
+        slp #90
+        ret
+    l_pressed:
+        add s_input_buffer, s_l
+        slp #90
+        ret
+    m_pressed:
+        add s_input_buffer, s_m
+        slp #90
+        ret
+    n_pressed:
+        add s_input_buffer, s_n
+        slp #90
+        ret
+    o_pressed:
+        add s_input_buffer, s_o
+        slp #90
+        ret
+    p_pressed:
+        add s_input_buffer, s_p
+        slp #90
+        ret
+    q_pressed:
+        add s_input_buffer, s_q
+        slp #90
+        ret
+    r_pressed:
+        add s_input_buffer, s_r
+        slp #90
+        ret
+    s_pressed:
+        add s_input_buffer, s_s
+        slp #90
+        ret
+    t_pressed:
+        add s_input_buffer, s_t
+        slp #90
+        ret
+    u_pressed:
+        add s_input_buffer, s_u
+        slp #90
+        ret
+    v_pressed:
+        add s_input_buffer, s_v
+        slp #90
+        ret
+    w_pressed:
+        add s_input_buffer, s_w
+        slp #90
+        ret
+    x_pressed:
+        add s_input_buffer, s_x
+        slp #90
+        ret
+    y_pressed:
+        add s_input_buffer, s_y
+        slp #90
+        ret
+    z_pressed:
+        add s_input_buffer, s_z
+        slp #90
+        ret
+
+    1_pressed:
+        add s_input_buffer, s_1
+        slp #90
+        ret
+    2_pressed:
+        add s_input_buffer, s_2
+        slp #90
+        ret
+    3_pressed:
+        add s_input_buffer, s_3
+        slp #90
+        ret
+    4_pressed:
+        add s_input_buffer, s_4
+        slp #90
+        ret
+    5_pressed:
+        add s_input_buffer, s_5
+        slp #90
+        ret
+    6_pressed:
+        add s_input_buffer, s_6
+        slp #90
+        ret
+    7_pressed:
+        add s_input_buffer, s_7
+        slp #90
+        ret
+    8_pressed:
+        add s_input_buffer, s_8
+        slp #90
+        ret
+    9_pressed:
+        add s_input_buffer, s_9
+        slp #90
+        ret
+    0_pressed:
+        add s_input_buffer, s_0
+        slp #90
+        ret
+
+    space_pressed:
+        add s_input_buffer, s_space
+        slp #90
+        ret
+    comma_pressed:
+        add s_input_buffer, s_comma
+        slp #90
+        ret
+    point_pressed:
+        add s_input_buffer, s_point
+        slp #90
+        ret
+    backspace_pressed:
+        set i_GPU_x, #1
+        set i_GPU_y, i_line
+        set i_GPU_w, #480
+        set i_GPU_h, #8
+        set i_GPU_color, i_CPU_BLACK
+        gpu rect
+        set s_input_buffer, s_empty
+        slp #90
+        ret
+    enter_pressed:
+        set s_input_sent, s_input_buffer
+        set s_input_buffer, s_empty
+        add i_line, #16
+        slp #90
+        ret
+
+    jmp console
+
+interpret_input:
+    set i_char_count, #0
+    gtc i_instruction, s_input_sent, i_char_count
+
+    ;instructions
+    cpr i_instruction, #120
+    jpt exit
+    cpr i_instruction, #112
+    jpt print
+    cpr i_instruction, #114
+    jpt read
+    cpr i_instruction, #119
+    jpt write
+
+    jmp console
+
+exit:                              ;quitte vers desktop
+    set s_input_sent, s_empty
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu clear
+    set i_line, #16
+    jmp desktop_load
+
+print:                             ;echo
+    set i_char_count, #1
+    cal arg_loop
+    set i_GPU_color, i_CPU_WHITE
+    psh s_arg
+    cal print_string
+    add i_line, #16
+    set s_input_sent, s_empty
+    jmp console
+
+read:                              ;read a l'adresse
+    set i_char_count, #1
+    gtc i_char, s_input_sent, i_char_count
+    cpr i_char, #115
+    jpt string_read
+    cpr i_char, #105
+    jpt int_read
+    cpr i_char, #98
+    jpt bool_read
+    set s_input_sent, s_empty
+    jmp console
+
+    string_read:
+        set i_char_count, #2
+        cal parse_loop
+        rad s_return, i_parsed
+        jmp after_read
+
+    int_read:
+        set i_char_count, #2
+        cal parse_loop
+        rad i_char, i_parsed
+        its s_return, i_char
+        jmp after_read
+
+    bool_read:
+        set i_char_count, #2
+        cal parse_loop
+        rad b_bool_read, i_parsed
+        cpr b_bool_read, #0
+        jpt read_bool_false
+        cpr b_bool_read, #1
+        jpt read_bool_true
+        set s_input_sent, s_empty
+        jmp console
+
+        read_bool_false:
+            set s_return, s_bool_false
+            jmp after_read
+
+        read_bool_true:
+            set s_return, s_bool_true
+            jmp after_read
+
+    after_read:
+        set i_GPU_color, i_CPU_WHITE
+        psh s_return
+        cal print_string
+        add i_line, #16
+        set s_input_sent, s_empty
+        jmp console
+
+write:                              ;ecrire a l'adresse
+    set i_char_count, #2
+    cal parse_w_space_loop
+    cal arg_loop
+    set i_char_count, #1
+    gtc i_char, s_input_sent, i_char_count
+    set i_adress, i_parsed
+    cpr i_char, #115
+    jpt string_write
+    cpr i_char, #105
+    jpt int_write
+    cpr i_char, #98
+    jpt bool_write
+    set s_input_sent, s_empty
+    jmp console
+    
+    string_write:
+        wrt s_arg, i_adress
+        jmp after_write
+        
+    int_write:
+        set s_input_sent, s_arg
+        set i_char_count, #-1
+        set i_parsed, #0
+        cal parse_loop
+        wrt i_parsed, i_adress
+        jmp after_write
+
+    bool_write:
+        cpr s_arg, s_0
+        jpt bool_false
+        cpr s_arg, s_1
+        jpt bool_true
+        set s_input_sent, s_empty
+        jmp console
+
+        bool_false:
+            set b_bool_read, #0
+            wrt b_bool_read, i_adress
+            jmp after_write
+
+        bool_true:
+            set b_bool_read, #1
+            wrt b_bool_read, i_adress
+            jmp after_write
+
+
+    after_write:
+        its s_return, i_adress
+        psh s_return
+        cal print_string
+        add i_line, #16
+        set s_input_sent, s_empty
+        jmp console
+
+parse_loop:
+    add i_char_count, #1
+    gtc i_char, s_input_sent, i_char_count
+    cpr i_char, #0
+    jpt after_parse_loop
+    sub i_char, #48
+    mul i_parsed, #10
+    add i_parsed, i_char
+    jmp parse_loop
+
+after_parse_loop:
+    ret
+
+parse_w_space_loop:
+    add i_char_count, #1
+    gtc i_char, s_input_sent, i_char_count
+    cpr i_char, #32
+    jpt after_parse_loop
+    sub i_char, #48
+    mul i_parsed, #10
+    add i_parsed, i_char
+    jmp parse_w_space_loop
+
+after_parse_w_space_loop:
+    ret
+
+arg_loop:
+    add i_char_count, #1
+    gtc i_char, s_input_sent, i_char_count
+    cal ascii_to_string
+    cpr i_char, #0
+    jpf arg_loop
+    ret
+
+ascii_to_string:
+    cpr i_char, #0
+    jpt char_null
+    cpr i_char, #32
+    jpt char_space
+    cpr i_char, #44
+    jpt char_comma
+    cpr i_char, #46
+    jpt char_point
+    cpr i_char, #48
+    jpt char_0
+    cpr i_char, #49
+    jpt char_1
+    cpr i_char, #50
+    jpt char_2
+    cpr i_char, #51
+    jpt char_3
+    cpr i_char, #52
+    jpt char_4
+    cpr i_char, #53
+    jpt char_5
+    cpr i_char, #54
+    jpt char_6
+    cpr i_char, #55
+    jpt char_7
+    cpr i_char, #56
+    jpt char_8
+    cpr i_char, #57
+    jpt char_9
+    cpr i_char, #97
+    jpt char_a
+    cpr i_char, #98
+    jpt char_b
+    cpr i_char, #99
+    jpt char_c
+    cpr i_char, #100
+    jpt char_d
+    cpr i_char, #101
+    jpt char_e
+    cpr i_char, #102
+    jpt char_f
+    cpr i_char, #103
+    jpt char_g
+    cpr i_char, #104
+    jpt char_h
+    cpr i_char, #105
+    jpt char_i
+    cpr i_char, #106
+    jpt char_j
+    cpr i_char, #107
+    jpt char_k
+    cpr i_char, #108
+    jpt char_l
+    cpr i_char, #109
+    jpt char_m
+    cpr i_char, #110
+    jpt char_n
+    cpr i_char, #111
+    jpt char_o
+    cpr i_char, #112
+    jpt char_p
+    cpr i_char, #113
+    jpt char_q
+    cpr i_char, #114
+    jpt char_r
+    cpr i_char, #115
+    jpt char_s
+    cpr i_char, #116
+    jpt char_t
+    cpr i_char, #117
+    jpt char_u
+    cpr i_char, #118
+    jpt char_v
+    cpr i_char, #119
+    jpt char_w
+    cpr i_char, #120
+    jpt char_x
+    cpr i_char, #121
+    jpt char_y
+    cpr i_char, #122
+    jpt char_z
+
+    char_null:
+        ret
+    char_space:
+        add s_arg, s_space
+        ret
+    char_comma:
+        add s_arg, s_comma
+        ret
+    char_point:
+        add s_arg, s_point
+        ret
+    char_0:
+        add s_arg, s_0
+        ret
+    char_1:
+        add s_arg, s_1
+        ret
+    char_2:
+        add s_arg, s_2
+        ret
+    char_3:
+        add s_arg, s_3
+        ret
+    char_4:
+        add s_arg, s_4
+        ret
+    char_5:
+        add s_arg, s_5
+        ret
+    char_6:
+        add s_arg, s_6
+        ret
+    char_7:
+        add s_arg, s_7
+        ret
+    char_8:
+        add s_arg, s_8
+        ret
+    char_9:
+        add s_arg, s_9
+        ret
+    char_a:
+        add s_arg, s_a
+        ret
+    char_b:
+        add s_arg, s_b
+        ret
+    char_c:
+        add s_arg, s_c
+        ret
+    char_d:
+        add s_arg, s_d
+        ret
+    char_e:
+        add s_arg, s_e
+        ret
+    char_f:
+        add s_arg, s_f
+        ret
+    char_g:
+        add s_arg, s_g
+        ret
+    char_h:
+        add s_arg, s_h
+        ret
+    char_i:
+        add s_arg, s_i
+        ret
+    char_j:
+        add s_arg, s_j
+        ret
+    char_k:
+        add s_arg, s_k
+        ret
+    char_l:
+        add s_arg, s_l
+        ret
+    char_m:
+        add s_arg, s_m
+        ret
+    char_n:
+        add s_arg, s_n
+        ret
+    char_o:
+        add s_arg, s_o
+        ret
+    char_p:
+        add s_arg, s_p
+        ret
+    char_q:
+        add s_arg, s_q
+        ret
+    char_r:
+        add s_arg, s_r
+        ret
+    char_s:
+        add s_arg, s_s
+        ret
+    char_t:
+        add s_arg, s_t
+        ret
+    char_u:
+        add s_arg, s_u
+        ret
+    char_v:
+        add s_arg, s_v
+        ret
+    char_w:
+        add s_arg, s_w
+        ret
+    char_x:
+        add s_arg, s_x
+        ret
+    char_y:
+        add s_arg, s_y
+        ret
+    char_z:
+        add s_arg, s_z
+        ret
+;========PASSWORD ROUTINES========
+password_id:
+    ;check du mot de passe
+    rad s_password, $0
+    cpr s_input_sent, s_password
+    jpt id_checked
+
+    ;si mauvais mot de passe
+    set s_input_sent, s_empty
+    psh s_id_request_reject
+    cal print_string
+    slp 1000
+    cal backspace_pressed
+    jmp identification_loop
+
+;========DESKTOP ROUTINES=========
+desktop_application_launch:
+    slp 100 ;anti_toogle
+
+    cpr i_desktop_y, #1
+    jpt app_launch_y1
+    cpr i_desktop_y, #2
+    jpt app_launch_y2
+    jmp app_launch_y3
+app_launch_y1:
+    cpr i_desktop_x, #1
+    jpt console_launch
+    cpr i_desktop_x, #2
+    jpt parametres_start
+    cpr i_desktop_x, #3
+    jpt kernel_loop
+    cpr i_desktop_x, #4
+    jpt kernel_loop
+    cpr i_desktop_x, #5
+    jpt kernel_loop
+    jmp kernel_loop
+app_launch_y2:
+    cpr i_desktop_x, #1
+    jpt kernel_loop
+    cpr i_desktop_x, #2
+    jpt kernel_loop
+    cpr i_desktop_x, #3
+    jpt kernel_loop
+    cpr i_desktop_x, #4
+    jpt kernel_loop
+    cpr i_desktop_x, #5
+    jpt kernel_loop
+    jmp kernel_loop
+app_launch_y3:
+    cpr i_desktop_x, #1
+    jpt kernel_loop
+    cpr i_desktop_x, #2
+    jpt kernel_loop
+    cpr i_desktop_x, #3
+    jpt kernel_loop
+    cpr i_desktop_x, #4
+    jpt kernel_loop
+    cpr i_desktop_x, #5
+    jpt kernel_loop
+
+    ;procedure de dechargement du disque
+    ;clear de l'ecran
+    set i_GPU_color, i_CPU_BLACK
+    gpu clear
+
+    set s_input_sent, s_empty ;reinitialisation du mot de passe
+
+    ;message d'information
+    set i_GPU_x, #196
+    set i_GPU_y, #236
+    set i_GPU_s, #2
+    psh s_return_boot_msg
+    cal print_string
+    slp 1500
+    gpu clear
+    jmp main
+
+desktop_up:
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu voidrect
+    set i_GPU_color, i_CPU_WHITE
+
+    sub i_desktop_y, #1
+    cpg i_desktop_y, #0
+    jpt after_wrap_up
+    add i_desktop_y, #3
+    after_wrap_up:
+
+    cal desktop_affichage
+    slp 300
+    jmp kernel_loop
+
+desktop_down:
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu voidrect
+    set i_GPU_color, i_CPU_WHITE
+
+    add i_desktop_y, #1
+    cpg i_desktop_y, #3
+    jpf after_wrap_down
+    sub i_desktop_y, #3
+    after_wrap_down:
+
+    cal desktop_affichage
+    slp 300
+    jmp kernel_loop
+
+desktop_left:
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu voidrect
+    set i_GPU_color, i_CPU_WHITE
+
+    sub i_desktop_x, #1
+    cpg i_desktop_x, #0
+    jpt after_wrap_left
+    add i_desktop_x, #6
+    after_wrap_left:
+
+    cal desktop_affichage
+    slp 300
+    jmp kernel_loop
+
+desktop_right:
+    set i_GPU_color, i_CPU_SKYBLUE
+    gpu voidrect
+    set i_GPU_color, i_CPU_WHITE
+
+    add i_desktop_x, #1
+    cpg i_desktop_x, #6
+    jpf after_wrap_right
+    sub i_desktop_x, #6
+    after_wrap_right:
+
+    cal desktop_affichage
+    slp 300
+    jmp kernel_loop
+
+desktop_affichage:
+    cpr i_desktop_y, #1
+    jpt affichage_y1
+    cpr i_desktop_y, #2
+    jpt affichage_y2
+    jmp affichage_y3
+affichage_y1:
+    cpr i_desktop_x, #1
+    jpt affichage_x1y1
+    cpr i_desktop_x, #2
+    jpt affichage_x2y1
+    cpr i_desktop_x, #3
+    jpt affichage_x3y1
+    cpr i_desktop_x, #4
+    jpt affichage_x4y1
+    cpr i_desktop_x, #5
+    jpt affichage_x5y1
+    set i_GPU_x, #525
+    set i_GPU_y, #111
+    ret
+affichage_y2:
+    cpr i_desktop_x, #1
+    jpt affichage_x1y2
+    cpr i_desktop_x, #2
+    jpt affichage_x2y2
+    cpr i_desktop_x, #3
+    jpt affichage_x3y2
+    cpr i_desktop_x, #4
+    jpt affichage_x4y2
+    cpr i_desktop_x, #5
+    jpt affichage_x5y2
+    set i_GPU_x, #525
+    set i_GPU_y, #231
+    ret
+affichage_y3:
+    cpr i_desktop_x, #1
+    jpt affichage_x1y3
+    cpr i_desktop_x, #2
+    jpt affichage_x2y3
+    cpr i_desktop_x, #3
+    jpt affichage_x3y3
+    cpr i_desktop_x, #4
+    jpt affichage_x4y3
+    cpr i_desktop_x, #5
+    jpt affichage_x5y3
+    set i_GPU_x, #525
+    set i_GPU_y, #351
+    ret
+
+;premiere ligne
+affichage_x1y1:
+    set i_GPU_x, #25
+    set i_GPU_y, #111
+    ret
+affichage_x2y1:
+    set i_GPU_x, #125
+    set i_GPU_y, #111
+    ret
+affichage_x3y1:
+    set i_GPU_x, #225
+    set i_GPU_y, #111
+    ret
+affichage_x4y1:
+    set i_GPU_x, #325
+    set i_GPU_y, #111
+    ret
+affichage_x5y1:
+    set i_GPU_x, #425
+    set i_GPU_y, #111
+    ret
+
+;deuxieme ligne
+affichage_x1y2:
+    set i_GPU_x, #25
+    set i_GPU_y, #231
+    ret
+affichage_x2y2:
+    set i_GPU_x, #125
+    set i_GPU_y, #231
+    ret
+affichage_x3y2:
+    set i_GPU_x, #225
+    set i_GPU_y, #231
+    ret
+affichage_x4y2:
+    set i_GPU_x, #325
+    set i_GPU_y, #231
+    ret
+affichage_x5y2:
+    set i_GPU_x, #425
+    set i_GPU_y, #231
+    ret
+
+;troisieme ligne
+affichage_x1y3:
+    set i_GPU_x, #25
+    set i_GPU_y, #351
+    ret
+affichage_x2y3:
+    set i_GPU_x, #125
+    set i_GPU_y, #351
+    ret
+affichage_x3y3:
+    set i_GPU_x, #225
+    set i_GPU_y, #351
+    ret
+affichage_x4y3:
+    set i_GPU_x, #325
+    set i_GPU_y, #351
+    ret
+affichage_x5y3:
+    set i_GPU_x, #425
+    set i_GPU_y, #351
+    ret
+
+;=====PARAPLEGIQUE ROUTINES============
+parametres_start:
+    ;reinitialisation de l'ecran
+    set i_GPU_color, i_CPU_GRAY
+    gpu clear
+    set i_GPU_color, i_CPU_WHITE
+    set i_GPU_s, #4
+
+    ;affichage textes======
+    set i_GPU_x, #191
+    set i_GPU_y, #5
+    psh s_settings_titre
+    cal print_string
+    set i_GPU_s, #2
+    set i_GPU_x, #15
+
+    ;texte 1 (ipf)
+    set i_GPU_y, #50
+    psh s_setting_text_1
+    cal print_string
+    set i_GPU_x, #15
+
+    ;texte 2 (code)
+    add i_GPU_y, #30
+    psh s_setting_text_2
+    cal print_string
+    set i_GPU_x, #15
+
+    ;exit
+    set i_GPU_x, #15
+    set i_GPU_y, #450
+    psh s_desktop_exit
+    cal print_string
+
+    ;initialisation carre de selection
+    set i_GPU_x, #10
+    set i_GPU_y, #45
+    set i_GPU_w, #280
+    set i_GPU_h, #25
+    set i_GPU_color, i_CPU_WHITE
+    gpu voidrect
+
+parametres:
+    gpu voidrect ;actualisation de l'affichage du rectangle de selection
+
+    ;detection touches de selection
+    cpr b_IN_up, #1
+    jpt params_up
+    cpr b_IN_down, #1
+    jpt params_down
+
+    ;detection touche enter
+    cpr b_IN_enter, #1
+    jpt parametres_modifs
+    jmp parametres
+
+    params_up:
+        ;effacage ancien rect
+        set i_GPU_color, i_CPU_GRAY
+        gpu voidrect
+        set i_GPU_color, i_CPU_WHITE
+        slp #300
+
+        ;modification ordonnee
+        sub i_parametres_y, #1
+        cpg i_parametres_y, #0
+        jpt parametres_affichage_actualisation
+        add i_parametres_y, #3
+        jmp parametres_affichage_actualisation
+    params_down:
+        ;effacage ancien rect
+        set i_GPU_color, i_CPU_GRAY
+        gpu voidrect
+        set i_GPU_color, i_CPU_WHITE
+        slp #300
+
+        ;modification ordonnee
+        add i_parametres_y, #1
+        cpg i_parametres_y, #3
+        jpf parametres_affichage_actualisation
+        sub i_parametres_y, #3
+        jmp parametres_affichage_actualisation
+    parametres_affichage_actualisation:
+        cpr i_parametres_y, #1
+        jpt params_affichage_y1
+        cpr i_parametres_y, #2
+        jpt params_affichage_y2
+        cpr i_parametres_y, #3
+        jpt params_affichage_y5 ;5 pour pouvoir accueillir plus d'options plus tard
+    params_affichage_y1:
+        set i_GPU_y, #45
+        jmp parametres
+    params_affichage_y2:
+        set i_GPU_y, #75
+        jmp parametres
+    params_affichage_y5:
+        set i_GPU_y, #445
+        jmp parametres
+
+    parametres_modifs:
+        cpr i_parametres_y, #1
+        jpt parametres_ipf_initialisation
+        cpr i_parametres_y, #2
+        jpt parametres_code_initialisation
+        jmp desktop_load
+        
+    ;parametres de changement d'ipf
+    parametres_ipf_initialisation:
+        ;clear de l'ecran
+        set i_GPU_color, i_CPU_GRAY
+        gpu clear
+        set i_GPU_color, i_CPU_WHITE
+        set i_GPU_y, #20
+
+        ;bouton 1================
+        set i_GPU_x, #25
+        psh s_params_bouton1
+        cal print_string
+
+        ;bouton 2================
+        set i_GPU_x, 125
+        psh s_params_bouton2
+        cal print_string
+
+        ;bouton 3================
+        set i_GPU_x, #225
+        psh s_params_bouton3
+        cal print_string
+
+        ;information text========
+        set i_GPU_x, #35
+        set i_GPU_y, #50
+        psh s_params_ipf_text
+        cal print_string
+
+        ;rectangle de selection==
+        set i_GPU_x, #20
+        set i_GPU_y, #15
+        set i_GPU_w, #100
+        set i_GPU_h, #30
+        set i_GPU_color, i_CPU_WHITE
+        gpu voidrect
+
+    parametres_ipf:
+        gpu voidrect ;actualisation du rectangle de selection
+
+        ;detection des touches de selection
+        cpr b_IN_left, #1
+        jpt params_ipf_left
+        cpr b_IN_right, #1
+        jpt params_ipf_right
+
+        ;detection touche enter
+        cpr b_IN_enter, #1
+        jpt params_ipf_select
+
+        ;detection touche maj (quit)
+        cpr b_IN_maj, #1
+        jpt parametres
+        cpr i_parametres_x, #1
+        jpt params_ipf_x1
+        cpr i_parametres_x, #2
+        jpt params_ipf_x2
+        cpr i_parametres_x, #3
+        jpt params_ipf_x3
+        set i_GPU_x, #70
+        jmp parametres_ipf
+    params_ipf_select:
+        cpr i_parametres_x, #1
+        jpt params_ifp_selected1
+        cpr i_parametres_x, #2
+        jpt params_ifp_selected2
+        cpr i_parametres_x, #3
+        jpt params_ifp_selected3
+        ipf 1800          ;option 4
+        jmp parametres
+    params_ifp_selected1:
+        ipf 1             ;option 1 (troll)
+        jmp parametres
+    params_ifp_selected2:
+        ipf 800           ;option 2
+        jmp parametres
+    params_ifp_selected3:
+        ipf 1200          ;option 3
+        jmp parametres
+    params_ipf_left:
+        ;effacage de lancien rect
+        set i_GPU_color, i_CPU_GRAY
+        gpu voidrect
+        set i_GPU_color, i_CPU_WHITE
+        slp #100
+
+        ;modification abscisse
+        sub i_parametres_x, #1
+        cpg i_parametres_x, #0
+        jpt parametres
+        add i_parametres_x, #4
+        jmp parametres
+    params_ipf_right:
+        ;effacage de lancien rect
+        set i_GPU_color, i_CPU_GRAY
+        gpu voidrect
+        set i_GPU_color, i_CPU_WHITE
+        slp #100
+
+        ;modification abscisse
+        add i_parametres_x, #1
+        cpg i_parametres_x, #0
+        jpf parametres
+        sub i_parametres_x, #4
+        jmp parametres
+    params_ipf_x1:
+        set i_GPU_x, #20
+        jmp parametres_ipf
+    params_ipf_x2:
+        set i_GPU_x, #100
+        jmp parametres_ipf
+    params_ipf_x3:
+        set i_GPU_x, #200
+        jmp parametres_ipf
+    
+    ;parametres de changement de code
+    parametres_code_initialisation:
+        ;clear de l'ecran
+        set i_GPU_color, i_CPU_BLACK
+        gpu clear
+
+        set s_input_sent, s_empty   ;reinitialisation du sent
+        set s_input_buffer, s_empty ;reinitialisation du buffer
+        set i_line, #16
+
+        ;position d'affichage
+        set i_GPU_color, i_CPU_WHITE
+        set i_GPU_x, #1
+        set i_GPU_y, #1
+        set i_GPU_s, #1
+        psh s_new_password_welcome
+        cal print_string
+
+    parametres_code:
+        set i_GPU_s, #1
+        set i_GPU_x, #1
+        set i_GPU_y, i_line
+        
+        ;check des entrees
+        cpr s_input_sent, s_empty
+        jpf params_new_code
+        cal input_detector
+        set i_GPU_color, i_CPU_WHITE
+
+        ;affichage des entrees
+        psh s_input_buffer
+        cal print_string
+
+        jmp parametres_code
+    params_new_code:
+        ;verification des tentatives de leave parametres de code
+        cpr s_input_sent, s_x
+        jpt parametres_start
+        cpr s_input_sent, s_desktop_exit
+        jpt parametres_start
+
+        rad s_password, $0 ;lecture de l'ancien password
+
+        ;compare ancien avec nouveau password
+        cpr s_input_sent, s_password
+        jpf new_password_check
+        psh s_id_request_reject
+        cal print_string
+        slp #1000
+        cal backspace_pressed
+        jmp parametres_code
+        new_password_check:
+
+        wrt s_input_sent, $0 ;ecriture new password
+        jmp parametres
+
+;==========DEATH NOTE TEXT EDITOR=================
+text_editor_start:
+    set i_GPU_color, i_CPU_BLACK
+    gpu clear
+
+    set s_input_buffer, s_empty
+    set s_input_sent, s_empty
+
+    set i_line, #16
+
+    set b_gave_adress, #0
+
+    set i_GPU_color, i_CPU_WHITE
+    set i_GPU_x, #1
+    set i_GPU_y, #1
+    set i_GPU_s, #1
+    psh s_death_note_welcome
+    cal print_string
+
+text_editor_loop:
+    set i_GPU_s, #1
+    set i_GPU_x, #1
+    set i_GPU_y, i_line
+    set i_parsed, #0
+
+    cpr s_input_sent, s_empty
+    jpf text_read_line
+    cal input_detector
+    set i_GPU_color, i_CPU_WHITE
+
+    psh s_input_buffer
+    cal print_string
+
+    cpr b_IN_maj, #1
+    jpf text_editor_loop
+    jmp desktop_load
+
+    text_read_line:
+        cpr b_gave_adress, #1
+        jpt text_write_line
+        set i_char_count, #-1
+        cal parse_loop
+        set i_mem_line, i_parsed
+        set s_input_sent, s_empty
+        set b_gave_adress, #1
+        jmp text_editor_loop
+
+    text_write_line:
+        wrt s_input_sent, i_mem_line
+        set s_input_sent, s_empty
+        add i_mem_line, #2
+        jmp text_editor_loop
+
+;magnus carlsen 2024-06 for ГСПД и XS проект
+;@atlos06
